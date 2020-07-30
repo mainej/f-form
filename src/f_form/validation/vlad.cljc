@@ -5,10 +5,11 @@
   [[f-form.validation/set-valid]]. That is the only integration point with the
   rest of `f-form`.
 
-  If you want to do validation with another library, do not load this
+  If you wish to use this namespace, you must provide `vlad` in your own
+  dependencies. If you want to validate with another library, do not load this
   namespace."
-  (:require [vlad.core :as vlad]
-            [f-form.validation :as validation]))
+  (:require [f-form.validation :as validation]
+            [vlad.core :as vlad]))
 
 (defn assign-names
   "See [[translate-errors]] for details about field-name assignment."
@@ -44,13 +45,14 @@
                              :date/day   nil})]))
 
   (def validation
-    (vlad/attr [:person/birthday] (validation/value
+    (vlad/attr [:person/birthday] (f-form.validation.vlad/value
                                     (vlad/chain
                                       (vlad/attr [:date/month] (vlad/present))
                                       (vlad/attr [:date/year] (vlad/present))))))
   ```
 
-  The `field-names` should be a hashmap whose keys are the field paths.
+  The `field-names` should be a hashmap whose keys are field paths and values
+  are strings.
 
   ``` clojure
   (def field-names
@@ -60,12 +62,13 @@
   Then validation will be translated like so:
 
   ``` clojure
-  (form.validation/validate form validation field-names)
+  (f-form.validation.vlad/validate form validation field-names)
   ;; => {:form/fields        {:person/birthday {:field/errors [\"Birthday is required.\"] ,,,}
   ;;     :form/fields-valid? false}
   ```
 
-  If the individual components of a complex-valued field need their own names, they can be provided like so:
+  Alternatively, if the individual components of a complex-valued field need
+  their own names, they can be provided like so:
 
   ```clojure
 
@@ -73,7 +76,7 @@
     {[:person/birthday] {[:date/month] \"Birth month\"
                          [:date/year] \"Birth year\"}})
 
-  (form.validation/validate form validation field-names)
+  (f-form.validation.vlad/validate form validation field-names)
   ;; => {:form/fields {:person/birthday {:field/errors [\"Birth month is required.\"]}
   ;;     :form/fields-valid? false}
   ```
@@ -113,17 +116,29 @@
   attr.
 
   Example:
+  ```clojure
   (vlad/validate (vlad/attr [:name]
-                            (value (vlad/attr [:person/first-name]
-                                              (vlad/one-of #{\"Valid\" \"Values\"}))))
-               {:name {:field/value {:person/first-name \"Invalid\"}}})
-  ;; => ({:type :vlad.core/one-of,
-  ;;      :set #{\"Values\" \"Valid\"},
-  ;;      :value-selector (:person/first-name),
-  ;;      :selector (:name)})
-  "
+                            (f-form.validation.vlad/value
+                              (vlad/attr [:person/first-name]
+                                         (vlad/one-of #{\"Valid\" \"Values\"}))))
+                 {:name {:field/value {:person/first-name \"Invalid\"}}})
+  ;; => [{:type           :vlad.core/one-of
+  ;;      :set            #{\"Values\" \"Valid\"}
+  ;;      :selector       [:name]
+  ;;      :value-selector [:person/first-name]}]
+  ```
+
+  Note that `:selector` is the `:field/path`, and `:value-selector` is the path
+  within the `:field/value`. These two selectors are used by [[validate]] to
+  customize the names of invalid fields."
   ([] (Value. vlad/valid))
   ([validation] (Value. validation)))
+
+(defn field
+  "Like `vlad/attr`, but for a field. Defines a `validation` to run on the
+  `:field/value` of a field whose `:field/path` matches the given `field-path`."
+  ([field-path]            (vlad/attr field-path (value)))
+  ([field-path validation] (vlad/attr field-path (value validation))))
 
 (defrecord Urgency [level validation]
   vlad/Validation
