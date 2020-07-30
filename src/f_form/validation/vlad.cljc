@@ -8,7 +8,8 @@
   If you wish to use this namespace, you must provide `vlad` in your own
   dependencies. If you want to validate with another library, do not load this
   namespace."
-  (:require [f-form.validation :as validation]
+  (:require [f-form.form :as form]
+            [f-form.validation :as validation]
             [vlad.core :as vlad]))
 
 (defn assign-names
@@ -93,12 +94,11 @@
                      (assign-names field-names)
                      (vlad/translate-errors vlad/english-translation))]
     (reduce (fn [form path]
-              (update form :form/fields
-                      update-in path
-                      (fn [field]
-                        (-> field
-                            (assoc :field/errors (get errors path))
-                            (assoc :field/warnings (get warnings path))))))
+              (form/update-field-by-path form path
+                                         (fn [field]
+                                           (-> field
+                                               (assoc :field/errors (get errors path))
+                                               (assoc :field/warnings (get warnings path))))))
             (validation/set-valid form (empty? errors))
             (:form/field-paths form))))
 
