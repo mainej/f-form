@@ -1,0 +1,2 @@
+{:paths   ["src"]
+ :aliases {:vlad {:extra-deps {vlad {:mvn/version "3.3.2"}}}}}
