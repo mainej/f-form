@@ -44,7 +44,7 @@
   some or all of:
 
   * `:field/visited?`
-  * `:field/active`
+  * `:field/active?`
   * `:field/touched?`
   * `:field/modified?`
   * `:field/pristine?`

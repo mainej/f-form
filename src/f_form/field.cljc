@@ -40,7 +40,7 @@
         :field/value   value
         :field/tracker tracker}
        (tracker/track :initialized)
-       snapshot)))
+       (snapshot))))
 
 (defn reset
   "Abandon all changes to a `field`, including any accumulated state history
