@@ -51,6 +51,14 @@
   [tracked-fields]
   (set tracked-fields))
 
+(def full-tracker
+  "A tracker which tracks all five common pieces of state."
+  (tracker #{:field/visited?
+             :field/active?
+             :field/touched?
+             :field/modified?
+             :field/pristine?}))
+
 (def default-tracker
   "A tracker which tracks only one of the five common pieces of state - `:field/touched?`."
   (tracker #{#_:field/visited?
