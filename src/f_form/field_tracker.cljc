@@ -36,9 +36,6 @@
   namespace provides some tools to customize a tracker that accumulates a
   minimal amount of state.")
 
-(defn- comp-some [& fns]
-  (apply comp (remove nil? fns)))
-
 (defn tracker
   "Builds a tracker that tracks state for the given `tracked-fields`, a set of
   some or all of:
@@ -50,23 +47,9 @@
   * `:field/pristine?`
 
   Most applications will need only one tracker, which can be applied to all
-  fields. By default the [[default-tracker]] will be applied.
-
-  Tries to build an efficient tracker by pre-calculating the functions that will
-  modify the field with every change. Has not been benchmarked against other
-  approaches."
+  fields. By default the [[default-tracker]] will be applied."
   [tracked-fields]
-  {:initialized  (comp-some (when (tracked-fields :field/visited?)  #(assoc % :field/visited? false))
-                            (when (tracked-fields :field/active?)   #(assoc % :field/active? false))
-                            (when (tracked-fields :field/touched?)  #(assoc % :field/touched? false)))
-   :snapshot     (comp-some (when (tracked-fields :field/modified?) #(assoc % :field/modified? false))
-                            (when (tracked-fields :field/pristine?) #(assoc % :field/pristine? true)))
-   :focus-gained (comp-some (when (tracked-fields :field/visited?)  #(assoc % :field/visited? true))
-                            (when (tracked-fields :field/active?)   #(assoc % :field/active? true)))
-   :focus-lost   (comp-some (when (tracked-fields :field/active?)   #(assoc % :field/active? false))
-                            (when (tracked-fields :field/touched?)  #(assoc % :field/touched? true)))
-   :changed      (comp-some (when (tracked-fields :field/modified?) #(assoc % :field/modified? true))
-                            (when (tracked-fields :field/pristine?) #(assoc % :field/pristine? (= (:field/value %) (:field/initial-value %)))))})
+  (set tracked-fields))
 
 (def default-tracker
   "A tracker which tracks only one of the five common pieces of state - `:field/touched?`."
@@ -76,9 +59,35 @@
              #_:field/modified?
              #_:field/pristine?}))
 
+(defn pristine?
+  "Whether the field's current value is the same as its initial value."
+  [field]
+  (= (:field/value field) (:field/initial-value field)))
+
+(def ^:private transitions
+  "A map of transitions: tracked-field -> event -> transition.
+  In English, given we are tracking `tracked-field`, when we see `event`, then
+  apply `transition` to the field, to get the new value for the `tracked-field`."
+  {:field/visited?  {:initialized  (constantly false)
+                     :focus-gained (constantly true)}
+   :field/active?   {:initialized  (constantly false)
+                     :focus-gained (constantly true)
+                     :focus-lost   (constantly false)}
+   :field/touched?  {:initialized (constantly false)
+                     :focus-lost  (constantly true)}
+   :field/modified? {:snapshot (constantly false)
+                     :changed  (constantly true)}
+   :field/pristine? {:snapshot (constantly true)
+                     :changed  pristine?}})
+
 (defn track
   "Track the `event` on the `field`, using the tracker configured on the field.
   Returns a `field` with new state tracked on it."
   [field event]
-  (let [f (get-in field [:field/tracker event])]
-    (f field)))
+  (persistent!
+   (reduce (fn [field tracked-field]
+             (if-let [transition (get-in transitions [tracked-field event])]
+               (assoc! field tracked-field (transition field))
+               field))
+           (transient field)
+           (:field/tracker field))))

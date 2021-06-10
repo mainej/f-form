@@ -98,7 +98,8 @@
 
 (defn changes
   "A nested hashmap containing only the fields with changes. The keypaths into
-  the hashmap are the `:field/path`s."
+  the hashmap are the `:field/path`s. Only works if the fields' trackers have
+  been tracking :field/pristine?"
   [form]
   (->> form
        fields
