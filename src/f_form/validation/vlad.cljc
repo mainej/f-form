@@ -109,7 +109,7 @@
            (-> error
                (assoc :value-selector (:selector error))
                (dissoc :selector)))
-     (vlad/validate validation (get data :field/value)))))
+         (vlad/validate validation (get data :field/value)))))
 
 (defn value
   "Runs a validation on the data found at the `:field/value` of the surrounding
