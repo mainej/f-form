@@ -49,31 +49,39 @@
                 validation/valid?)))))
 
 (t/deftest field-validation
-  (let [validation (form.validation/field [:age] (form.validation/non-nil))
-        form       (form.validation/validate person-form validation field-labels)]
+  (let [validation (form.validation/field [:age] (form.validation/non-nil))]
     (t/is (= ["Age is required."]
-             (:field/errors (form/field-by-path form [:age]))))))
+             (-> person-form
+                 (form.validation/validate validation field-labels)
+                 (form/field-by-path [:age])
+                 :field/errors)))))
 
 (t/deftest value-validation
   (t/testing "is long-hand for field validation"
-    (let [validation (vlad/attr [:age] (form.validation/value (form.validation/non-nil)))
-          form       (form.validation/validate person-form validation field-labels)]
+    (let [validation (vlad/attr [:age] (form.validation/value (form.validation/non-nil)))]
       (t/is (= ["Age is required."]
-               (:field/errors (form/field-by-path form [:age])))))))
+               (-> person-form
+                   (form.validation/validate validation field-labels)
+                   (form/field-by-path [:age])
+                   :field/errors))))))
 
 (t/deftest complex-labels
   (let [validation (form.validation/field [:name]
                                           (vlad/attr [:person/first-name]
-                                                     (form.validation/non-nil)))
-        form       (form.validation/validate person-form validation field-labels)]
+                                                     (form.validation/non-nil)))]
     (t/is (= ["First Name is required."]
-             (:field/errors (form/field-by-path form [:name]))))))
+             (-> person-form
+                 (form.validation/validate validation field-labels)
+                 (form/field-by-path [:name])
+                 :field/errors)))))
 
 (t/deftest pristine
-  (let [validation (vlad/attr [:postal-code] (form.validation/not-pristine))
-        form       (form.validation/validate person-form validation field-labels)]
+  (let [validation (vlad/attr [:postal-code] (form.validation/not-pristine))]
     (t/is (= ["Postal Code must be changed."]
-             (:field/errors (form/field-by-path form [:postal-code]))))
+             (-> person-form
+                 (form.validation/validate validation field-labels)
+                 (form/field-by-path [:postal-code])
+                 :field/errors)))
     (t/is (-> person-form
               (form/update-field-by-path [:postal-code] field/change "45678")
               (form.validation/validate validation field-labels)
@@ -83,19 +91,23 @@
   (t/testing "urgency of validation error can be lowered to a warning, with a corresponding message."
     (let [validation (vlad/attr [:postal-code]
                                 (form.validation/warning
-                                 (form.validation/not-pristine)))
-          form       (form.validation/validate person-form validation field-labels)]
+                                 (form.validation/not-pristine)))]
       (t/is (= ["Postal Code should be changed."]
-               (:field/warnings (form/field-by-path form [:postal-code])))))))
+               (-> person-form
+                   (form.validation/validate validation field-labels)
+                   (form/field-by-path [:postal-code])
+                   :field/warnings))))))
 
 (t/deftest numbers
   (let [validation (form.validation/field [:age]
                                           (vlad/chain
                                            (form.validation/pos-number)
-                                           (form.validation/value-in 21 140)))
-        form       (form.validation/validate person-form validation field-labels)]
+                                           (form.validation/value-in 21 140)))]
     (t/is (= ["Age must be a positive number."]
-             (:field/errors (form/field-by-path form [:age]))))
+             (-> person-form
+                 (form.validation/validate validation field-labels)
+                 (form/field-by-path [:age])
+                 :field/errors)))
     (t/is (= ["Age must be between 21 and 140."]
              (-> person-form
                  (form/update-field-by-path [:age] field/change 20)
@@ -109,8 +121,10 @@
   (let [validation (form.validation/field [:age]
                                           (vlad/join
                                            (form.validation/is-uuid)
-                                           (form.validation/is-inst)))
-        form       (form.validation/validate person-form validation field-labels)]
+                                           (form.validation/is-inst)))]
     (t/is (= ["Age must be an id."
               "Age is required."]
-             (:field/errors (form/field-by-path form [:age]))))))
+             (-> person-form
+                 (form.validation/validate validation field-labels)
+                 (form/field-by-path [:age])
+                 :field/errors)))))
