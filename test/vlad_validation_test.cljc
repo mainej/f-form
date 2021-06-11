@@ -91,12 +91,13 @@
   (t/testing "urgency of validation error can be lowered to a warning, with a corresponding message."
     (let [validation (vlad/attr [:postal-code]
                                 (form.validation/warning
-                                 (form.validation/not-pristine)))]
+                                 (form.validation/not-pristine)))
+          form       (form.validation/validate person-form validation field-labels)]
       (t/is (= ["Postal Code should be changed."]
-               (-> person-form
-                   (form.validation/validate validation field-labels)
+               (-> form
                    (form/field-by-path [:postal-code])
-                   :field/warnings))))))
+                   :field/warnings)))
+      (t/is (validation/valid? form)))))
 
 (t/deftest numbers
   (let [validation (form.validation/field [:age]
