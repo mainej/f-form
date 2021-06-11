@@ -158,7 +158,14 @@
   (urgency ::warning validation))
 
 (defn not-pristine
-  "Checks that the field is not pristine."
+  "Checks that the field is not pristine. Should be used on a field, not a value, so:
+  ```clojure
+  ;; do this
+  (vlad/attr [:postal-code] (form.validation/not-pristine))
+  ;; not this
+  (form.validation/field [:postal-code] (form.validation/not-pristine))
+  ```
+  "
   ([]
    (not-pristine {}))
   ([error-data]
