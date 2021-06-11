@@ -9,7 +9,7 @@ Functional form management for Clojure(Script), inspired by Final Form.
 {:deps
   {mainej/f-form
     {:git/url "https://github.com/mainej/f-form"
-     :sha "20f0d0268c26e20f49b551a90cc1a4e0983be155"}}}
+     :sha "8f3dfa848f2fa93cad8fe370aadb172c0181582e"}}}
 ```
 
 ## Background
