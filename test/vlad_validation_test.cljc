@@ -1,12 +1,12 @@
 (ns vlad-validation-test
-  (:require  #?(:clj [clojure.test :as t]
-                :cljs [cljs.test :as t :include-macros true])
-             [vlad.core :as vlad]
-             [f-form.validation.vlad :as form.validation]
-             [f-form.form :as form]
-             [f-form.field :as field]
-             [f-form.field-tracker :as tracker]
-             [f-form.validation :as validation]))
+  (:require #?(:clj [clojure.test :as t]
+               :cljs [cljs.test :as t :include-macros true])
+            [f-form.field :as field]
+            [f-form.field-tracker :as tracker]
+            [f-form.form :as form]
+            [f-form.validation :as validation]
+            [f-form.validation.vlad :as form.validation]
+            [vlad.core :as vlad]))
 
 (def person-form (form/init [(field/init [:name] {:person/first-name nil
                                                   :person/last-name  nil})

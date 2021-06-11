@@ -1,9 +1,9 @@
 (ns field-tracking-test
-  (:require  #?(:clj [clojure.test :as t]
-                :cljs [cljs.test :as t :include-macros true])
-             [f-form.form :as form]
-             [f-form.field :as field]
-             [f-form.field-tracker :as tracker]))
+  (:require #?(:clj [clojure.test :as t]
+               :cljs [cljs.test :as t :include-macros true])
+            [f-form.field :as field]
+            [f-form.field-tracker :as tracker]
+            [f-form.form :as form]))
 
 (t/deftest navigating-between-fields
   (t/testing "tracks the movement"

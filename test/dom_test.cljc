@@ -1,11 +1,11 @@
 (ns dom-test
-  (:require  #?(:clj [clojure.test :as t]
-                :cljs [cljs.test :as t :include-macros true])
-             [clojure.edn :as edn]
-             [f-form.dom :as form.dom]
-             [f-form.field :as field]
-             [f-form.field-tracker :as tracker]
-             [f-form.form :as form]))
+  (:require #?(:clj [clojure.test :as t]
+               :cljs [cljs.test :as t :include-macros true])
+            [clojure.edn :as edn]
+            [f-form.dom :as form.dom]
+            [f-form.field :as field]
+            [f-form.field-tracker :as tracker]
+            [f-form.form :as form]))
 
 (defn update-field! [!form field-path f _e]
   (swap! !form form/update-field-by-path field-path f))
