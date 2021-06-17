@@ -90,20 +90,40 @@
   (:form/submitting? form))
 
 (defn fields
-  "A seq of the fields on the `form`."
-  [form]
-  (map (fn [path]
-         (field-by-path form path))
-       (:form/field-paths form)))
+  "A seq of the fields on the `form`, optionally filtered with xf."
+  ([form]
+   (fields form (comp)))
+  ([form xf]
+   (sequence (comp (map (fn [path]
+                          (field-by-path form path)))
+                   xf)
+             (:form/field-paths form))))
+
+(defn field-values
+  "A nested hashmap containing the values of the fields. The keypaths into the
+  hashmap are the `:field/path`s.
+
+  NOTE: this function expects the fields, as via `(fields form)`, not the whole
+  form."
+  [fields]
+  (reduce (fn [result {:keys [field/path field/value]}]
+            (assoc-in result path value))
+          {}
+          fields))
+
+(defn values
+  "A nested hashmap containing the values of all fields, optionally filtered by
+  xf. The keypaths into the hashmap are the `:field/path`s."
+  ([form]
+   (field-values (fields form)))
+  ([form xf]
+   (field-values (fields form xf))))
 
 (defn changes
-  "A nested hashmap containing only the fields with changes. The keypaths into
-  the hashmap are the `:field/path`s. Only works if the fields' trackers have
-  been tracking :field/pristine?"
+  "A nested hashmap containing only the values of the fields with changes. The
+  keypaths into the hashmap are the `:field/path`s.
+
+  Only works if the fields' trackers have been tracking :field/pristine?
+  Otherwise returns all values."
   [form]
-  (->> form
-       fields
-       (remove :field/pristine?)
-       (reduce (fn [result {:keys [field/path field/value]}]
-                 (assoc-in result path value))
-               {})))
+  (values form (remove :field/pristine?)))

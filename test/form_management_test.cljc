@@ -29,6 +29,16 @@
            (form/value-by-path (form/init [(field/init [:val] "value")])
                                [:val]))))
 
+(t/deftest fetching-all-values
+  (t/is (= {:val     "value"
+            :nested  {:val "nested"}
+            :complex {:id  "c"
+                      :val "complex"}}
+           (form/values (form/init [(field/init [:val] "value")
+                                    (field/init [:nested :val] "nested")
+                                    (field/init [:complex] {:id  "c"
+                                                            :val "complex"})])))))
+
 (t/deftest submitting
   (t/is (not (form/submitting? (form/init))))
   (t/is (form/submitting? (form/submitting (form/init))))
