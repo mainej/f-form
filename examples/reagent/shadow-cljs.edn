@@ -1,0 +1,6 @@
+{:deps true
+ :builds {:app {:asset-path "/js"
+                :modules {:main {:init-fn app.core/main}}
+                :output-dir "public/js"
+                :target :browser} }
+ :dev-http {3000 "public"}}
