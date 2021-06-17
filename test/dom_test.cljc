@@ -96,7 +96,22 @@
         (on-change {:target {:value "b"}})
         (t/is (= {:option/id   "b"
                   :option/attr :b}
-                 (:field/value (current-field))))))))
+                 (:field/value (current-field))))))
+    (t/testing "does not require an initial value"
+      (let [options [{:option/id   "a"
+                      :option/attr :a}
+                     {:option/id   "b"
+                      :option/attr :b}
+                     {:option/id   "c"
+                      :option/attr :c}]
+            form    (form/init [(field/init [:x])])
+
+            {:keys [value]}
+            (f-form.dom/select {:on-change (fn [_])}
+                               (form/field-by-path form [:x])
+                               {:options      options
+                                :option-value :option/id})]
+        (t/is (= "" value))))))
 
 (t/deftest plugin-props
   (with-redefs [form.dom/target-value mock-target-value]

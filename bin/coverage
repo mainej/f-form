@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+exec clj -A:vlad:test -Sdeps '{:deps {cloverage/cloverage {:mvn/version "RELEASE"}}}' -m cloverage.coverage \
+  --src-ns-path src \
+  --test-ns-path 'test' \
+  --test-ns-regex '.*test'
+  # this doesn't seem to keep these mocked functions out of the coverage reports
+  # --exclude-call 'f-form.dom/target-value' \
+  # --exclude-call 'f-form.dom/target-checked'

@@ -54,7 +54,12 @@
              (-> person-form
                  (form.vlad/validate validation field-labels)
                  (form/field-by-path [:age])
-                 :field/errors)))))
+                 :field/errors))))
+  (t/testing "ignores empty field validation"
+    (let [validation (form.vlad/field [:age])]
+      (t/is (-> person-form
+                (form.vlad/validate validation field-labels)
+                validation/valid?)))))
 
 (t/deftest value-validation
   (t/testing "is long-hand for field validation"
@@ -114,6 +119,28 @@
                  (form/update-field-by-path [:age] field/change 20)
                  (form.vlad/validate validation field-labels)
                  (form/field-by-path [:age])
+                 :field/errors)))
+    (t/is (= ["Age must be between 21 and 140."]
+             (-> person-form
+                 (form/update-field-by-path [:age] field/change 141)
+                 (form.vlad/validate validation field-labels)
+                 (form/field-by-path [:age])
+                 :field/errors)))
+    (t/is (-> person-form
+              (form/update-field-by-path [:age] field/change 140)
+              (form.vlad/validate validation field-labels)
+              validation/valid?))
+    (t/is (-> person-form
+              (form/update-field-by-path [:age] field/change 21)
+              (form.vlad/validate validation field-labels)
+              validation/valid?))))
+
+(t/deftest custom-error-message
+  (let [validation (vlad/attr [:postal-code] (form.vlad/not-pristine {:name "Zip"}))]
+    (t/is (= ["Zip must be changed."]
+             (-> person-form
+                 (form.vlad/validate validation field-labels)
+                 (form/field-by-path [:postal-code])
                  :field/errors)))))
 
 (t/deftest miscelaneous-assertions
