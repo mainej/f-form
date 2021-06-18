@@ -26,27 +26,6 @@
    {:comms.style/id   "phone"
     :comms.style/text "Call me"}])
 
-;; EXAMPLE: dynamic validation
-(defn validation [form]
-  (vlad/join
-   (form.vlad/field [:full-name] (form.vlad/non-nil))
-   (form.vlad/field [:communication-style] (form.vlad/non-nil))
-   (vlad/chain
-    (form.vlad/field [:password] (vlad/length-over 7))
-    ;; EXAMPLE: multi-field validation
-    (form.vlad/field [:password-confirmation] (vlad/equals-value
-                                               (form/value-by-path form [:password])
-                                               {:type        ::vlad/equals-field
-                                                :first-name  (field-labels [:password-confirmation])
-                                                :second-name (field-labels [:password])})))
-   (form.vlad/field [:premium-account]
-                    ;; EXAMPLE: non-blocking warnings (2)
-                    (form.vlad/warning
-                     (vlad/predicate
-                      #(not (true? %))
-                      ;; EXAMPLE: custom error messages
-                      {:message (str "You need a " (field-labels [:premium-account]) " to access all features.")})))))
-
 (defn new-form []
   ;; EXAMPLE: expanded tracking
   ;;
@@ -60,6 +39,26 @@
                 (field/init [:password] nil tracker)
                 (field/init [:password-confirmation] nil tracker)
                 (field/init [:premium-account] false tracker)])))
+
+;; EXAMPLE: dynamic validation
+(defn validation [form]
+  (vlad/join
+   (form.vlad/field [:full-name] (form.vlad/non-nil))
+   (form.vlad/field [:communication-style] (form.vlad/non-nil))
+   (form.vlad/field [:password] (vlad/length-over 7))
+   ;; EXAMPLE: multi-field validation
+   (form.vlad/field [:password-confirmation] (vlad/equals-value
+                                              (form/value-by-path form [:password])
+                                              {:type        ::vlad/equals-field
+                                               :first-name  (field-labels [:password-confirmation])
+                                               :second-name (field-labels [:password])}))
+   (form.vlad/field [:premium-account]
+                    ;; EXAMPLE: non-blocking warnings (2)
+                    (form.vlad/warning
+                     (vlad/predicate
+                      #(not (true? %))
+                      ;; EXAMPLE: custom error messages
+                      {:message (str "You need a " (field-labels [:premium-account]) " to access all features.")})))))
 
 ;; STATE MANAGEMENT & VALIDATION
 
