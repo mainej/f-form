@@ -1,5 +1,5 @@
 (ns app.core
-  (:require [reagent.core :as r]
+  (:require [reagent.dom :as r]
             [app.hello-form]))
 
 (defn ^:dev/after-load render []
