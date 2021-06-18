@@ -61,8 +61,9 @@ do:
 
 ## Learn more
 
-* See `examples/reagent` for a running example of how to use f-form in a reagent
-  project.
+* See
+  [`examples/reagent`](https://github.com/mainej/f-form/tree/master/examples/reagent)
+  for a running example of how to use f-form in a reagent project.
 * See the [API Docs](https://mainej.github.io/f-form/)
 
 ## Develop

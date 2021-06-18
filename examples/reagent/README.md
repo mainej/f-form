@@ -1,7 +1,7 @@
 ## Example usage of f-form
 
 This example demonstrates how f-form can be used in a reagent project. See
-`src/app/hello_form.cljs`
+[`src/app/hello_form.cljs`](https://github.com/mainej/f-form/tree/master/examples/reagent/src/app/hello_form.cljs).
 
 ## Available Scripts
 
