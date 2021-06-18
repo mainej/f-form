@@ -63,8 +63,14 @@ do:
 
 * See `examples/reagent` for a running example of how to use f-form in a reagent
   project.
-* Run `bin/doc` to generate documentation, accessible at
-  `gh-pages/index.html`.
+* See the [API Docs](https://mainej.github.io/f-form/)
+
+## Develop
+
+* Run `bin/test` to run tests.
+* Run `bin/coverage` for an updated code coverage report.
+* Run `bin/doc` to generate documentation, accessible at `gh-pages/index.html`.
+* Run `bin/doc-release` to publish documentation to Github Pages.
 
 ## Alternatives
 
