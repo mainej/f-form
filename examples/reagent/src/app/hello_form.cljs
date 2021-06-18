@@ -9,33 +9,11 @@
             [reagent.core :as r]
             [vlad.core :as vlad]))
 
-(defn errors-list
-  [shown? color errors]
-  (when (seq errors)
-    [:ul.space-y-1
-     {:class [color (when (not shown?) :invisible)]}
-     (for [[i error] (map-indexed vector errors)]
-       ^{:key i}
-       [:li error])]))
+(defn element-id [{:keys [field/path]}]
+  (str "element-" (string/join "-" path)))
 
-(defn field-status [{:keys [field/active? field/touched? field/errors field/warnings]}]
-  [:div.flex.space-x-1
-   [:span.w-4 {:class (cond
-                        (seq errors)   :text-red
-                        (seq warnings) :text-yellow
-                        :else          :text-green)}
-    (cond
-      ;; EXAMPLE: use :field/active? to highlight current field
-      active?                          "←"
-      ;; EXAMPLE: use :field/touched? to delay error feedback until after interaction (1)
-      (not touched?)                   ""
-      (or (seq errors) (seq warnings)) "x"
-      :else                            "✓")]
-   [:div.space-y-1
-    ;; EXAMPLE: use :field/touched? to delay error feedback until after interaction (2)
-    [errors-list touched? :text-yellow warnings]
-    ;; EXAMPLE: non-blocking warnings (1)
-    [errors-list touched? :text-red errors]]])
+(defn errors-id [{:keys [field/path]}]
+  (str "errors-" (string/join "-" path)))
 
 (def field-labels
   {[:full-name]             "Full Name"
@@ -44,8 +22,11 @@
    [:password-confirmation] "Password Confirmation"
    [:premium-account]       "Premium Account"})
 
-(defn field-label [field]
-  (get field-labels (:field/path field)))
+(defn field-label [{:keys [field/path]}]
+  (get field-labels path))
+
+(defn field-invalid? [{:keys [field/errors field/warnings]}]
+  (or (seq errors) (seq warnings)))
 
 (def communication-styles
   [{:comms.style/id   "email"
@@ -102,22 +83,55 @@
                       ;; EXAMPLE: validation (on change)
                       (validate-form (form/update-field-by-path form path update-fn)))))
 
-(defn element-id [{:keys [field/path]}]
-  (string/join "-" path))
+(defn errors-list
+  [shown? color errors]
+  (when (seq errors)
+    [:ul.space-y-1
+     {:class [color (when (not shown?) :sr-only)]}
+     (for [[i error] (map-indexed vector errors)]
+       ^{:key i}
+       [:li error])]))
+
+(defn field-status [{:keys [field/active? field/touched? field/errors field/warnings] :as field}]
+  [:div.flex.space-x-1
+   [:span.w-4 {:class       (cond
+                              (seq errors)   :text-red
+                              (seq warnings) :text-yellow
+                              :else          :text-green)
+               :aria-hidden true}
+    (cond
+      ;; EXAMPLE: use :field/active? to highlight current field
+      active?                "←"
+      ;; EXAMPLE: use :field/touched? to delay error feedback until after interaction (1)
+      (not touched?)         ""
+      (field-invalid? field) "x"
+      :else                  "✓")]
+   [:div.space-y-1 {:id (errors-id field)}
+    ;; EXAMPLE: use :field/touched? to delay error feedback until after interaction (2)
+    [errors-list touched? :text-yellow warnings]
+    ;; EXAMPLE: non-blocking warnings (1)
+    [errors-list touched? :text-red errors]]])
+
+(defn field-props
+  "Extend input `props` (as per f-form.dom) with data relevant for this `field`"
+  [props field]
+  (cond-> props
+    :always                (assoc :id (element-id field)
+                                  :on-change update-field)
+    (field-invalid? field) (assoc :aria-invalid true
+                                  :aria-describedby (errors-id field))))
 
 ;; EXAMPLE: html and css at user discretion (1)
 (defn basic-input
   ([field] [basic-input {} field])
   ([props field]
-   (let [id (element-id field)]
-     [:<>
-      [:label {:for id} [:span (field-label field)]]
-      [:div
-       [:input.w-full
-        ;; EXAMPLE: event handlers for an <input> element and a string-valued field
-        (form.dom/input (assoc props :id id, :on-change update-field)
-                        field)]]
-      [field-status field]])))
+   [:<>
+    [:label {:for (element-id field)} [:span (field-label field)]]
+    [:div
+     [:input.w-full
+      ;; EXAMPLE: event handlers for an <input> element and a string-valued field
+      (form.dom/input (field-props props field) field)]]
+    [field-status field]]))
 
 (defn password-input
   ([field] [password-input {} field])
@@ -128,36 +142,33 @@
 (defn checkbox-input
   ([field] [checkbox-input {} field])
   ([props field]
-   (let [id (element-id field)]
-     [:<>
-      [:label {:for id} [:span (field-label field)]]
-      [:div
-       [:input
-        ;; EXAMPLE: event handlers for a <input type="checkbox"> element and a boolean-valued field
-        (form.dom/checkbox (assoc props :id id, :on-change update-field)
-                           field)]]
-      [field-status field]])))
+   [:<>
+    [:label {:for (element-id field)} [:span (field-label field)]]
+    [:div
+     [:input
+      ;; EXAMPLE: event handlers for a <input type="checkbox"> element and a boolean-valued field
+      (form.dom/checkbox (field-props props field) field)]]
+    [field-status field]]))
 
 ;; EXAMPLE: html and css at user discretion (3)
 (defn basic-select
   ([field config] [basic-select {} field config])
   ([props field {:keys [options option-value option-body]}]
-   (let [id (element-id field)]
-     [:<>
-      [:label {:for id} [:span (field-label field)]]
-      [:div
-       [:select
-        ;; EXAMPLE: event handlers for a <select> element and a complex-valued field
-        (f-form.dom/select (assoc props :id id, :on-change update-field)
-                           field
-                           {:options      options
-                            :option-value option-value})
-        [:option {:value "" :disabled true} "Choose..."]
-        (for [option options
-              :let   [value (option-value option)]]
-          ^{:key value}
-          [:option {:value value} (option-body option)])]]
-      [field-status field]])))
+   [:<>
+    [:label {:for (element-id field)} [:span (field-label field)]]
+    [:div
+     [:select
+      ;; EXAMPLE: event handlers for a <select> element and a complex-valued field
+      (f-form.dom/select (field-props props field)
+                         field
+                         {:options      options
+                          :option-value option-value})
+      [:option {:value "" :disabled true} "Choose..."]
+      (for [option options
+            :let   [value (option-value option)]]
+        ^{:key value}
+        [:option {:value value} (option-body option)])]]
+    [field-status field]]))
 
 ;; EXAMPLE: input customized for one field
 (defn communication-style-input [field]
