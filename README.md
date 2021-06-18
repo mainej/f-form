@@ -69,8 +69,11 @@ do:
 
 * Run `bin/test` to run tests.
 * Run `bin/coverage` for an updated code coverage report.
-* Run `bin/doc` to generate documentation, accessible at `gh-pages/index.html`.
-* Run `bin/doc-release` to publish documentation to Github Pages.
+* Generate documentation
+    * After cloning this project, run `git fetch origin gh-pages && git worktree
+      add gh-pages gh-pages`.
+    * Run `bin/doc` to generate documentation, accessible at `gh-pages/index.html`.
+    * Run `bin/doc-release` to publish documentation to Github Pages.
 
 ## Alternatives
 
