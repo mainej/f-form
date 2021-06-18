@@ -5,6 +5,17 @@ set -Eeuo pipefail
 script_name="${BASH_SOURCE[0]##*/}"
 script_dir="${BASH_SOURCE[0]%$script_name}"
 
+# The gh-pages directory is configured as described here: http://web.archive.org/web/20210618071736/https://medium.com/linagora-engineering/deploying-your-js-app-to-github-pages-the-easy-way-or-not-1ef8c48424b7
+
+# * The directory is or should have been initialized after cloning the repo:
+#     * `git fetch origin gh-pages`
+#     * `git worktree add gh-pages gh-pages`
+# * This script
+#     * Uses `bin/doc` to output docs into the directory,
+#     * commits the directory,
+#     * and pushes the changes to the `gh-pages` branch on Github.
+# * Github publishes the branch as the repo's Github Pages.
+
 ${script_dir}/doc
 
 cd gh-pages
