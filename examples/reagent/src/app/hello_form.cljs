@@ -77,6 +77,13 @@
                       ;; EXAMPLE: validation (on change)
                       (validate-form (form/update-field-by-path form path update-fn)))))
 
+(defn submitted! []
+  (swap! hello-form form/submitted))
+
+(defn mock-submit! []
+  (swap! hello-form form/submitting)
+  (js/setTimeout submitted! 3000))
+
 ;; HTML UTILS
 
 (defn element-id [{:keys [field/path]}]
@@ -96,6 +103,11 @@
                                   :on-change update-field)
     (field-invalid? field) (assoc :aria-invalid true
                                   :aria-describedby (errors-id field))))
+
+;; EXAMPLE: rendezvous for all reasons to disable submit (1)
+(defn occupied? [form]
+  (or (form/submitting? form)
+      (form.validation/invalid? form)))
 
 ;; HTML WRAPPERS
 
@@ -198,7 +210,9 @@
       [:code.block
        "When all errors (though not necessarily all warnings) have been
        resolved, the submit button will become enabled."]]
-     [:form.space-y-4 {:on-submit (fn [e] (.preventDefault e))}
+     [:form.space-y-4 {:on-submit (fn [e]
+                                    (.preventDefault e)
+                                    (mock-submit!))}
       [:div.grid.grid-cols-1.md:grid-cols-3.gap-1.md:gap-4
        [basic-input {:auto-focus true} (form/field-by-path form [:full-name])]
        [communication-style-input (form/field-by-path form [:communication-style])]
@@ -206,12 +220,11 @@
        [password-input (form/field-by-path form [:password-confirmation])]
        [checkbox-input (form/field-by-path form [:premium-account])]]
       [:button {:type     "submit"
-                ;; EXAMPLE: rendezvous for all validation
-                :disabled (form.validation/invalid? form)}
+                :disabled (occupied? form)}
        "Submit"]]
      [:div
       [:h2 "Invalid"]
-      [:code.block (pr-str (form/values form (filter #(seq (:field/errors %)))))]]
+      [:code (pr-str (form/values form (filter #(seq (:field/errors %)))))]]
      [:div
       [:h2 "Valid"]
-      [:code.block (pr-str (form/values form (remove #(seq (:field/errors %)))))]]]))
+      [:code (pr-str (form/values form (remove #(seq (:field/errors %)))))]]]))
