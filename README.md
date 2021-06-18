@@ -64,7 +64,7 @@ do:
 * See `examples/reagent` for a running example of how to use f-form in a reagent
   project.
 * Run `bin/doc` to generate documentation, accessible at
-  `target/doc/index.html`.
+  `gh-pages/index.html`.
 
 ## Alternatives
 

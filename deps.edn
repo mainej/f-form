@@ -5,5 +5,6 @@
                    :exec-fn    codox.main/generate-docs
                    :exec-args  {:source-paths ["src"]
                                 :doc-files    ["README.md"]
+                                :output-path  "gh-pages"
                                 :metadata     {:doc/format :markdown}
                                 :source-uri   "https://github.com/mainej/f-form/blob/master/{filepath}#L{line}"}}}}
