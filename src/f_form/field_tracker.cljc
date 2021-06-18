@@ -41,7 +41,7 @@
   minimal amount of state.")
 
 (defn tracker
-  "Builds a tracker that tracks state for the given `tracked-fields`, a set of
+  "Builds a tracker that tracks state for the given `tracking-attrs`, a set of
   some or all of:
 
   * `:field/visited?`
@@ -52,8 +52,8 @@
 
   Most applications will need only one tracker, which can be applied to all
   fields. By default the [[default-tracker]] will be applied."
-  [tracked-fields]
-  (set tracked-fields))
+  [tracking-attrs]
+  (set tracking-attrs))
 
 (def full-tracker
   "A tracker which tracks all five common pieces of state."
@@ -73,9 +73,9 @@
   (= (:field/value field) (:field/initial-value field)))
 
 (def ^:private transitions
-  "A map of transitions: tracked-field -> event -> transition.
-  In English, given we are tracking `tracked-field`, when we see `event`, then
-  apply `transition` to the field, to get the new value for the `tracked-field`."
+  "A map of transitions: tracking-attr -> event -> transition.
+  In English: given we are tracking `tracking-attr`, when we see `event`, then
+  apply `transition` to the field, to get the new value for the `tracking-attr`."
   {:field/visited?  {:initialized  (constantly false)
                      :focus-gained (constantly true)}
    :field/active?   {:initialized  (constantly false)
@@ -93,9 +93,9 @@
   Returns the `field` with new history tracked on it."
   [field event]
   (persistent!
-   (reduce (fn [field tracked-field]
-             (if-let [transition (get-in transitions [tracked-field event])]
-               (assoc! field tracked-field (transition field))
+   (reduce (fn [field tracking-attr]
+             (if-let [transition (get-in transitions [tracking-attr event])]
+               (assoc! field tracking-attr (transition field))
                field))
            (transient field)
            (:field/tracker field))))
