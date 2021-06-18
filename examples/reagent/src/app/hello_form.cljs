@@ -9,11 +9,7 @@
             [reagent.core :as r]
             [vlad.core :as vlad]))
 
-(defn element-id [{:keys [field/path]}]
-  (str "element-" (string/join "-" path)))
-
-(defn errors-id [{:keys [field/path]}]
-  (str "errors-" (string/join "-" path)))
+;; DATA & DEFINITIONS
 
 (def field-labels
   {[:full-name]             "Full Name"
@@ -21,12 +17,6 @@
    [:password]              "Password"
    [:password-confirmation] "Password Confirmation"
    [:premium-account]       "Premium Account"})
-
-(defn field-label [{:keys [field/path]}]
-  (get field-labels path))
-
-(defn field-invalid? [{:keys [field/errors field/warnings]}]
-  (or (seq errors) (seq warnings)))
 
 (def communication-styles
   [{:comms.style/id   "email"
@@ -36,6 +26,7 @@
    {:comms.style/id   "phone"
     :comms.style/text "Call me"}])
 
+;; EXAMPLE: dynamic validation
 (defn validation [form]
   (vlad/join
    (form.vlad/field [:full-name] (form.vlad/non-nil))
@@ -56,32 +47,57 @@
                       ;; EXAMPLE: custom error messages
                       {:message (str "You need a " (field-labels [:premium-account]) " to access all features.")})))))
 
-(defn validate-form [form]
-  (form.vlad/validate form (validation form) field-labels))
-
-;; EXAMPLE: expanded tracking
-;;
-;; We wouldn't have to pass a tracker to field/init if we were OK with the
-;; default tracker, but in this case, since we want to track :field/active?, we
-;; need a custom one.
-(def tracker (form.field-tracker/tracker #{:field/active? :field/touched?}))
-
-(def hello-form
-  ;; EXAMPLE: external state management (initial)
-  (r/atom
-   ;; EXAMPLE: validation (initial)
-   (validate-form
+(defn new-form []
+  ;; EXAMPLE: expanded tracking
+  ;;
+  ;; We wouldn't have to pass a tracker to field/init if we were OK with the
+  ;; default tracker, but in this case, since we want to track :field/active?, we
+  ;; need a custom one.
+  (let [tracker (form.field-tracker/tracker #{:field/active? :field/touched?})]
+    ;; EXAMPLE: form and field definition
     (form/init [(field/init [:full-name] "John Doe" tracker)
                 (field/init [:communication-style] nil tracker)
                 (field/init [:password] nil tracker)
                 (field/init [:password-confirmation] nil tracker)
-                (field/init [:premium-account] false tracker)]))))
+                (field/init [:premium-account] false tracker)])))
+
+;; STATE MANAGEMENT & VALIDATION
+
+(defn validate-form [form]
+  (form.vlad/validate form (validation form) field-labels))
+
+(def hello-form
+  ;; EXAMPLE: external state management (initial)
+  ;; EXAMPLE: validation (initial)
+  (r/atom (validate-form (new-form))))
 
 (defn update-field [path update-fn _dom-event]
   ;; EXAMPLE: external state management (on change)
   (swap! hello-form (fn [form]
                       ;; EXAMPLE: validation (on change)
                       (validate-form (form/update-field-by-path form path update-fn)))))
+
+;; HTML UTILS
+
+(defn element-id [{:keys [field/path]}]
+  (str "element-" (string/join "-" path)))
+
+(defn errors-id [{:keys [field/path]}]
+  (str "errors-" (string/join "-" path)))
+
+(defn field-invalid? [{:keys [field/errors field/warnings]}]
+  (or (seq errors) (seq warnings)))
+
+(defn field-props
+  "Extend input `props` (as per f-form.dom) with data relevant for this `field`"
+  [props field]
+  (cond-> props
+    :always                (assoc :id (element-id field)
+                                  :on-change update-field)
+    (field-invalid? field) (assoc :aria-invalid true
+                                  :aria-describedby (errors-id field))))
+
+;; HTML WRAPPERS
 
 (defn errors-list
   [shown? color errors]
@@ -112,69 +128,63 @@
     ;; EXAMPLE: non-blocking warnings (1)
     [errors-list touched? :text-red errors]]])
 
-(defn field-props
-  "Extend input `props` (as per f-form.dom) with data relevant for this `field`"
-  [props field]
-  (cond-> props
-    :always                (assoc :id (element-id field)
-                                  :on-change update-field)
-    (field-invalid? field) (assoc :aria-invalid true
-                                  :aria-describedby (errors-id field))))
+(defn field-label [{:keys [field/path] :as field}]
+  [:label {:for (element-id field)} [:span (get field-labels path)]])
 
-;; EXAMPLE: html and css at user discretion (1)
+(defn fieldgroup
+  "A fieldgroup is a row with 3 columns: A label, an input, and some error messages."
+  [field child-input]
+  [:<>
+   [field-label field]
+   [:div child-input]
+   [field-status field]])
+
+;; HTML INPUT COMPONENTS
+
 (defn basic-input
   ([field] [basic-input {} field])
   ([props field]
-   [:<>
-    [:label {:for (element-id field)} [:span (field-label field)]]
-    [:div
-     [:input.w-full
-      ;; EXAMPLE: event handlers for an <input> element and a string-valued field
-      (form.dom/input (field-props props field) field)]]
-    [field-status field]]))
+   [fieldgroup field
+    ;; EXAMPLE: html and css at user discretion. In this case, inputs are full
+    ;;          width, but checkboxes are not.
+    ;; EXAMPLE: event handlers for an <input> element and a string-valued field
+    [:input.w-full (form.dom/input (field-props props field) field)]]))
 
 (defn password-input
   ([field] [password-input {} field])
   ([props field]
    [basic-input (assoc props :type "password") field]))
 
-;; EXAMPLE: html and css at user discretion (2)
 (defn checkbox-input
   ([field] [checkbox-input {} field])
   ([props field]
-   [:<>
-    [:label {:for (element-id field)} [:span (field-label field)]]
-    [:div
-     [:input
-      ;; EXAMPLE: event handlers for a <input type="checkbox"> element and a boolean-valued field
-      (form.dom/checkbox (field-props props field) field)]]
-    [field-status field]]))
+   [fieldgroup field
+    ;; EXAMPLE: event handlers for a <input type="checkbox"> element and a boolean-valued field
+    [:input (form.dom/checkbox (field-props props field) field)]]))
 
-;; EXAMPLE: html and css at user discretion (3)
 (defn basic-select
   ([field config] [basic-select {} field config])
   ([props field {:keys [options option-value option-body]}]
-   [:<>
-    [:label {:for (element-id field)} [:span (field-label field)]]
-    [:div
-     [:select
-      ;; EXAMPLE: event handlers for a <select> element and a complex-valued field
-      (f-form.dom/select (field-props props field)
-                         field
-                         {:options      options
-                          :option-value option-value})
-      [:option {:value "" :disabled true} "Choose..."]
-      (for [option options
-            :let   [value (option-value option)]]
-        ^{:key value}
-        [:option {:value value} (option-body option)])]]
-    [field-status field]]))
+   [fieldgroup field
+    ;; EXAMPLE: event handlers for a <select> element and a complex-valued field
+    [:select
+     (f-form.dom/select (field-props props field)
+                        field
+                        {:options      options
+                         :option-value option-value})
+     [:option {:value "" :disabled true} "Choose..."]
+     (for [option options
+           :let   [value (option-value option)]]
+       ^{:key value}
+       [:option {:value value} (option-body option)])]]))
 
 ;; EXAMPLE: input customized for one field
 (defn communication-style-input [field]
   [basic-select field {:options      communication-styles
                        :option-value :comms.style/id
                        :option-body  :comms.style/text}])
+
+;; HTML PAGE & FORM COMPONENTS
 
 (defn form []
   (let [form @hello-form]
@@ -199,4 +209,9 @@
                 ;; EXAMPLE: rendezvous for all validation
                 :disabled (form.validation/invalid? form)}
        "Submit"]]
-     [:code.block (pr-str (form/values form))]]))
+     [:div
+      [:h2 "Invalid"]
+      [:code.block (pr-str (form/values form (filter #(seq (:field/errors %)))))]]
+     [:div
+      [:h2 "Valid"]
+      [:code.block (pr-str (form/values form (remove #(seq (:field/errors %)))))]]]))
