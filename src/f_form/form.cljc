@@ -1,9 +1,9 @@
 (ns f-form.form
-  "A form corresponds to an html `<form>` tag. Or to be more precise,
-  one `<form>` is built out of one or more f-form.forms.
+  "Functions for creating and upating a form, an immutable collection of related
+  [[f-form.field]]s which will be validated together.
 
-  A form is a collection of related [[f-form.field]]s which will be validated
-  together.")
+  A form usually corresponds to an html `<form>` tag. Or to be more precise, one
+  `<form>` is built out of one or more f-form.forms.")
 
 (defn field-by-path
   "Returns the field in the `form` stored at the given `path`."
@@ -11,7 +11,8 @@
   (get-in (:form/fields form) path))
 
 (defn value-by-path
-  "Returns the `:field/value` of the field in the `form` at the given `path`."
+  "Returns the `:field/value` of the field stored in the `form` at the given
+  `path`."
   [form path]
   (:field/value (field-by-path form path)))
 
@@ -90,7 +91,7 @@
   (:form/submitting? form))
 
 (defn fields
-  "A seq of the fields on the `form`, optionally filtered with xf."
+  "A seq of the fields on the `form`, optionally filtered with `xf`."
   ([form]
    (fields form (comp)))
   ([form xf]
@@ -100,8 +101,8 @@
              (:form/field-paths form))))
 
 (defn field-values
-  "A nested hashmap containing the values of the fields. The keypaths into the
-  hashmap are the `:field/path`s.
+  "_Helper:_ A nested hashmap containing the values of the fields. The keypaths into the
+  returned hashmap are the `:field/path`s.
 
   NOTE: this function expects the fields, as via `(fields form)`, not the whole
   form."
@@ -113,7 +114,7 @@
 
 (defn values
   "A nested hashmap containing the values of all fields, optionally filtered by
-  xf. The keypaths into the hashmap are the `:field/path`s."
+  `xf`. The keypaths into the returned hashmap are the `:field/path`s."
   ([form]
    (field-values (fields form)))
   ([form xf]
@@ -121,9 +122,9 @@
 
 (defn changes
   "A nested hashmap containing only the values of the fields with changes. The
-  keypaths into the hashmap are the `:field/path`s.
+  keypaths into the returned hashmap are the `:field/path`s.
 
-  Only works if the fields' trackers have been tracking :field/pristine?
+  Only works if the fields' trackers have been tracking `:field/pristine?`.
   Otherwise returns all values."
   [form]
   (values form (remove :field/pristine?)))

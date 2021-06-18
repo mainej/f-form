@@ -55,7 +55,7 @@
    (form.vlad/field [:premium-account]
                     (form.vlad/warning
                      (vlad/predicate
-                      not
+                      #(not (true? %))
                       {:message (str "You need a " (field-labels [:premium-account]) " to access all features.")})))))
 
 (defn validate-form [form]

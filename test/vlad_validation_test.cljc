@@ -136,6 +136,14 @@
               validation/valid?))))
 
 (t/deftest custom-error-message
+  (let [validation (vlad/attr [:postal-code] (form.vlad/not-pristine {:message "Zip hasn't been changed."}))]
+    (t/is (= ["Zip hasn't been changed."]
+             (-> person-form
+                 (form.vlad/validate validation field-labels)
+                 (form/field-by-path [:postal-code])
+                 :field/errors)))))
+
+(t/deftest custom-field-name
   (let [validation (vlad/attr [:postal-code] (form.vlad/not-pristine {:name "Zip"}))]
     (t/is (= ["Zip must be changed."]
              (-> person-form
@@ -144,15 +152,52 @@
                  :field/errors)))))
 
 (t/deftest miscelaneous-assertions
-  ;; It's not clear these should exist, since it's unlikely a user could correct
-  ;; them without help from the app.
-  (let [validation (form.vlad/field [:age]
-                                    (vlad/join
-                                     (form.vlad/is-uuid)
-                                     (form.vlad/is-inst)))]
-    (t/is (= ["Age must be an id."
-              "Age is required."]
-             (-> person-form
-                 (form.vlad/validate validation field-labels)
-                 (form/field-by-path [:age])
-                 :field/errors)))))
+  (t/testing "f-form defined errors"
+    ;; It's not clear these should exist, since it's unlikely a user could correct
+    ;; them without help from the app.
+    (let [validation (form.vlad/field [:age]
+                                      (vlad/join
+                                       (form.vlad/is-uuid)
+                                       (form.vlad/is-inst)))]
+      (t/is (= ["Age must be an id."
+                "Age is required."]
+               (-> person-form
+                   (form.vlad/validate validation field-labels)
+                   (form/field-by-path [:age])
+                   :field/errors)))))
+  (t/testing "vlad defined errors"
+    (letfn [(validated-field [value validation]
+              (let [path [:path]]
+                (-> (form/init [(field/init path value)])
+                    (form.vlad/validate (form.vlad/field path validation) {path "Field"})
+                    (form/field-by-path path))))]
+      (t/is (= ["Field is required."]
+               (:field/errors (validated-field nil (vlad/present)))))
+      (t/is (= ["Field is expected."]
+               (:field/warnings (validated-field nil (form.vlad/warning (vlad/present))))))
+      (t/is (= ["Field must be over 6 characters long."]
+               (:field/errors (validated-field "123456" (vlad/length-over 6)))))
+      (t/is (= ["Field must be under 6 characters long."]
+               (:field/errors (validated-field "123456" (vlad/length-under 6)))))
+      (t/is (= ["Field must be one of a, b, c."]
+               (:field/errors (validated-field "z" (vlad/one-of #{"a" "b" "c"})))))
+      (t/is (= ["Field must not be one of a, b, c."]
+               (:field/errors (validated-field "a" (vlad/not-of #{"a" "b" "c"})))))
+      (t/is (= ["Field must be \"a\"."]
+               (:field/errors (validated-field "z" (vlad/equals-value "a")))))
+      (t/is (= ["Field must match the pattern a."]
+               (:field/errors (validated-field "z" (vlad/matches #"a")))))
+      ;; This is not the only way to do confirmations. See
+      ;; examples/reagent/src/app/hello_form.cljs for a different approach.
+      (t/is (= ["Password must be the same as Confirmation."]
+               (-> (form/init [(field/init [:password] {:main         "a"
+                                                        :confirmation "b"})])
+                   (form.vlad/validate
+                    (form.vlad/field [:password] (vlad/equals-field
+                                                  [:main]
+                                                  [:confirmation]
+                                                  {:first-name  "Password"
+                                                   :second-name "Confirmation"}))
+                    {})
+                   (form/field-by-path [:password])
+                   :field/errors))))))

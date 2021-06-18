@@ -1,43 +1,44 @@
 (ns f-form.validation.vlad
-  "Tools for validating forms with https://github.com/logaan/vlad.
-
-  As any suite of validation tools should, this uses
-  [[f-form.validation/set-valid]]. That is the only integration point with the
-  rest of `f-form`.
+  "Tools for validating forms and their fields with
+  https://github.com/logaan/vlad.
 
   If you wish to use this namespace, you must provide `vlad` in your own
   dependencies. If you want to validate with another library, do not load this
   namespace."
-  (:require [f-form.form :as form]
+  (:require [clojure.string :as string]
+            [f-form.form :as form]
             [f-form.validation :as validation]
             [vlad.core :as vlad]))
 
 (defn assign-names
-  "See [[translate-errors]] for details about field-name assignment."
-  [errors name-by-selector]
-  (map (fn [e]
-         (if (:name e)
-           e
-           (assoc e :name (let [name-or-submap (name-by-selector (:selector e))]
-                            (if (map? name-or-submap)
-                              (name-or-submap (:value-selector e))
-                              name-or-submap)))))
-       errors))
+  "_Helper:_ augments `errors` with field labels. These labels will be used to
+  generate the error messages.
 
-(defn validate
-  "Similar to `vlad.core/field-errors`, but customized for dealing with forms:
+  The `field-labels` work in coordination with [[f-form.validation.vlad/field]].
+  Suppose you have the following:
 
-  Takes a `form` and a `validation` and saves any errors on the fields.
-  Updates the whole form's `:form/fields-valid?`.
+  ``` clojure
+  (def form
+    (form/init [(field/init [:address/street])]))
 
-  A field's errors are saved at `:field/errors` and its warnings (see
-  [[warning]]) at `:field/warnings`.
+  (def validation
+    (f-form.validation.vlad/field [:address/street]
+                                  (f-form.validation.vlad/non-nil)))
 
-  Errors and warnings are vectors of English strings, translated using the
-  `field-names`.
+  (def field-labels
+    {[:address/street] \"Street\"})
+  ```
 
-  The `field-names` are tailored to work with forms as well, in coordination
-  with [[value]]. Suppose you are collecting a birthday, like so:
+  Then:
+
+  ``` clojure
+  (f-form.validation.vlad/validate form validation field-labels)
+  ;; => {:form/fields {:address/street {:field/errors [\"Street is required.\"] ,,,}
+  ;;     :form/fields-valid? false}
+  ```
+
+  This function has special handling for complex fields. Suppose you are
+  collecting a birthday, like so:
 
   ``` clojure
   (def form
@@ -46,97 +47,72 @@
                              :date/day   nil})]))
 
   (def validation
-    (vlad/attr [:person/birthday] (f-form.validation.vlad/value
-                                    (vlad/chain
-                                      (vlad/attr [:date/month] (vlad/present))
-                                      (vlad/attr [:date/year] (vlad/present))))))
+    (f-form.validation.vlad/field [:person/birthday]
+                                  (vlad/chain
+                                    (vlad/attr [:date/month] (vlad/present))
+                                    (vlad/attr [:date/year] (vlad/present)))))
   ```
 
-  The `field-names` should be a hashmap whose keys are field paths and values
-  are strings.
+  The first option is to label the field as a whole:
 
   ``` clojure
-  (def field-names
+  (def field-labels
     {[:person/birthday] \"Birthday\"})
   ```
 
   Then validation will be translated like so:
 
   ``` clojure
-  (f-form.validation.vlad/validate form validation field-names)
-  ;; => {:form/fields        {:person/birthday {:field/errors [\"Birthday is required.\"] ,,,}
+  (f-form.validation.vlad/validate form validation field-labels)
+  ;; => {:form/fields {:person/birthday {:field/errors [\"Birthday is required.\"] ,,,}
   ;;     :form/fields-valid? false}
   ```
 
   Alternatively, if the individual components of a complex-valued field need
-  their own names, they can be provided like so:
+  their own labels, they can be provided like so:
 
   ```clojure
 
-  (def field-names
+  (def field-labels
     {[:person/birthday] {[:date/month] \"Birth month\"
                          [:date/year] \"Birth year\"}})
 
-  (f-form.validation.vlad/validate form validation field-names)
+  (f-form.validation.vlad/validate form validation field-labels)
   ;; => {:form/fields {:person/birthday {:field/errors [\"Birth month is required.\"]}
   ;;     :form/fields-valid? false}
   ```
   "
-  [form validation field-names]
-  (let [{errors   ::error
-         warnings ::warning} (->> (vlad/validate validation (:form/fields form))
-                                  (group-by #(get % :urgency ::error)))
-
-        errors   (-> errors
-                     (assign-names field-names)
-                     (vlad/translate-errors vlad/english-translation))
-        warnings (-> warnings
-                     (assign-names field-names)
-                     (vlad/translate-errors vlad/english-translation))]
-    (reduce (fn [form path]
-              (form/update-field-by-path form path
-                                         (fn [field]
-                                           (-> field
-                                               (assoc :field/errors (get errors path))
-                                               (assoc :field/warnings (get warnings path))))))
-            (validation/set-valid form (empty? errors))
-            (:form/field-paths form))))
+  [errors field-labels]
+  (map (fn [e]
+         (if (:name e)
+           e
+           (assoc e :name (let [name-or-submap (field-labels (:selector e))]
+                            (if (map? name-or-submap)
+                              (name-or-submap (:value-selector e))
+                              name-or-submap)))))
+       errors))
 
 (defrecord Value [validation]
   vlad/Validation
   (validate [_ data]
     (map (fn [error]
+           ;; Ensure `:selector` is the `:field/path`, and `:value-selector`
+           ;; is the path within the `:field/value`. These two selectors are
+           ;; used by [[assign-names]] to customize the names of invalid fields.
            (-> error
                (assoc :value-selector (:selector error))
                (dissoc :selector)))
          (vlad/validate validation (get data :field/value)))))
 
 (defn value
-  "Runs a validation on the data found at the `:field/value` of the surrounding
-  attr.
-
-  Example:
-  ```clojure
-  (vlad/validate (vlad/attr [:name]
-                            (f-form.validation.vlad/value
-                              (vlad/attr [:person/first-name]
-                                         (vlad/one-of #{\"Valid\" \"Values\"}))))
-                 {:name {:field/value {:person/first-name \"Invalid\"}}})
-  ;; => [{:type           :vlad.core/one-of
-  ;;      :set            #{\"Values\" \"Valid\"}
-  ;;      :selector       [:name]
-  ;;      :value-selector [:person/first-name]}]
-  ```
-
-  Note that `:selector` is the `:field/path`, and `:value-selector` is the path
-  within the `:field/value`. These two selectors are used by [[validate]] to
-  customize the names of invalid fields."
+  "_Validation wrapper:_ Runs a `validation` on the `:field/value` of the field
+  specified in the surrounding attr. In most cases you should prefer [[field]]."
   ([] (Value. vlad/valid))
   ([validation] (Value. validation)))
 
 (defn field
-  "Like `vlad/attr`, but for a field. Defines a `validation` to run on the
-  `:field/value` of a field whose `:field/path` matches the given `field-path`."
+  "_Validation wrapper:_ Runs a `validation` on the `:field/value` of a field
+  whose `:field/path` matches the given `field-path`."
   ([field-path]            (vlad/attr field-path (value)))
   ([field-path validation] (vlad/attr field-path (value validation))))
 
@@ -148,17 +124,23 @@
          (vlad/validate validation data))))
 
 (defn urgency
-  "Sets the urgency for any errors generated by `validation` to `level`."
+  "_Validation wrapper:_ Sets the urgency for any errors generated by `validation`
+  to `level`."
   [level validation]
   (Urgency. level validation))
 
 (defn warning
-  "Sets the urgency for any errors generated by `validation` to `::warning`."
+  "_Validation wrapper:_ Sets the urgency for any errors generated by `validation`
+  to `::warning`. This controls whether [[validate]] puts the errors on
+  `:field/errors` or `:field/warnings` and influences the translation of the
+  error."
   [validation]
   (urgency ::warning validation))
 
 (defn not-pristine
-  "Checks that the field is not pristine. Should be used on a field, not a value, so:
+  "_Validator:_ Checks that the field is not pristine. Should be used on a field,
+  not a field's value, so:
+
   ```clojure
   ;; do this
   (vlad/attr [:postal-code] (form.validation/not-pristine))
@@ -173,7 +155,7 @@
                    (merge {:type ::not-pristine} error-data))))
 
 (defn value-in
-  "Checks that the value is over `low` and under `high`, inclusive of both. No
+  "_Validator:_ Checks that the value is over `low` and under `high`, inclusive of both. No
   checking is done that `low` is lower than `high`."
   ([low high]
    (value-in low high {}))
@@ -183,7 +165,7 @@
                    (merge {:type ::value-in :low low :high high} error-data))))
 
 (defn non-nil
-  "Checks that the value is not nil."
+  "_Validator:_ Checks that the value is not nil."
   ([]
    (non-nil {}))
   ([error-data]
@@ -191,7 +173,7 @@
                    (merge {:type ::vlad/present} error-data))))
 
 (defn is-uuid
-  "Checks that the value is a uuid."
+  "_Validator:_ Checks that the value is a uuid."
   ([]
    (is-uuid {}))
   ([error-data]
@@ -199,7 +181,7 @@
                    (merge {:type ::is-uuid} error-data))))
 
 (defn is-inst
-  "Checks that the value is an instant."
+  "_Validator:_ Checks that the value is an instant."
   ([]
    (is-inst {}))
   ([error-data]
@@ -211,25 +193,117 @@
        (> x 0)))
 
 (defn pos-number
-  "Checks that the value is a positive number."
+  "_Validator:_ Checks that the value is a positive number."
   ([]
    (pos-number {}))
   ([error-data]
    (vlad/predicate (complement pos-number?)
                    (merge {:type ::pos-number} error-data))))
 
-(defmulti translate-urgency :urgency)
-(defmethod translate-urgency :default [_] "must")
-(defmethod translate-urgency ::warning [_] "should")
+(defmulti english-urgency-force
+  "_Helper:_ Adjusts the strength of the language used in warnings."
+  {:no-doc   true
+   :arglists '([error])}
+  :urgency)
+(defmethod english-urgency-force :default [_] "must")
+(defmethod english-urgency-force ::warning [_] "should")
 
-(defmethod vlad/english-translation ::not-pristine [{:keys [name] :as error}]
-  (str name " " (translate-urgency error) " be changed."))
+(defmulti english-urgency-necessity
+  "_Helper:_ Adjusts the strength of the language used in warnings."
+  {:no-doc   true
+   :arglists '([error])}
+  :urgency)
+(defmethod english-urgency-necessity :default [_] "required")
+(defmethod english-urgency-necessity ::warning [_] "expected")
 
-(defmethod vlad/english-translation ::value-in [{:keys [name low high] :as error}]
-  (str name " " (translate-urgency error) " be between " low " and " high "."))
+(defmulti english-translation
+  "_Helper:_ Takes an error and returns a human readable version of it.
 
-(defmethod vlad/english-translation ::is-uuid [{:keys [name] :as error}]
-  (str name " " (translate-urgency error) " be an id."))
+  Adapted from
+  [vlad.core/english-translation](https://github.com/logaan/vlad/blob/1dd8d427578655148e5333b3e40f0fe0223ee5eb/src/vlad/core.cljc#L224)
+  to account for f-form specific errors and urgency levels."
+  {:arglists '([error])}
+  :type)
 
-(defmethod vlad/english-translation ::pos-number [{:keys [name] :as error}]
-  (str name " " (translate-urgency error) " be a positive number."))
+(defmethod english-translation :vlad.core/present
+  [{:keys [name] :as error}]
+  (str name " is " (english-urgency-necessity error) "."))
+
+(defmethod english-translation :vlad.core/length-over
+  [{:keys [name size] :as error}]
+  (str name " " (english-urgency-force error) " be over " size " characters long."))
+
+(defmethod english-translation :vlad.core/length-under
+  [{:keys [name size] :as error}]
+  (str name " " (english-urgency-force error) " be under " size " characters long."))
+
+(defmethod english-translation :vlad.core/one-of
+  [{:keys [name set] :as error}]
+  (str name " " (english-urgency-force error) " be one of " (string/join ", " set) "."))
+
+(defmethod english-translation :vlad.core/not-of
+  [{:keys [name set] :as error}]
+  (str name " " (english-urgency-force error) " not be one of " (string/join ", " set) "."))
+
+(defmethod english-translation :vlad.core/equals-value
+  [{:keys [name value] :as error}]
+  (str name " " (english-urgency-force error) " be \"" value "\"."))
+
+(defmethod english-translation :vlad.core/equals-field
+  [{:keys [first-name second-name] :as error}]
+  (str first-name " " (english-urgency-force error) " be the same as " second-name "."))
+
+(defmethod english-translation :vlad.core/matches
+  [{:keys [name pattern] :as error}]
+  (str name " " (english-urgency-force error) " match the pattern " (.toString pattern) "."))
+
+(defmethod english-translation ::not-pristine [{:keys [name] :as error}]
+  (str name " " (english-urgency-force error) " be changed."))
+
+(defmethod english-translation ::value-in [{:keys [name low high] :as error}]
+  (str name " " (english-urgency-force error) " be between " low " and " high "."))
+
+(defmethod english-translation ::is-uuid [{:keys [name] :as error}]
+  (str name " " (english-urgency-force error) " be an id."))
+
+(defmethod english-translation ::pos-number [{:keys [name] :as error}]
+  (str name " " (english-urgency-force error) " be a positive number."))
+
+(defn validate
+  "_Core:_ Applies a `validation` to a `form`. Adds `:field/errors` and
+  `:field/warnings` to invalid fields. Updates the whole form's
+  `:form/fields-valid?` depending on whether there are any `:field/errors`.
+
+  Similar to
+  [vlad.core/field-errors](https://github.com/logaan/vlad/blob/1dd8d427578655148e5333b3e40f0fe0223ee5eb/src/vlad/core.cljc#L282),
+  but customized for dealing with forms.
+
+  Errors and warnings are vectors of English strings, translated using the
+  `field-labels` (according to [[assign-names]]) and
+  [vlad.core/translate-errors](https://github.com/logaan/vlad/blob/1dd8d427578655148e5333b3e40f0fe0223ee5eb/src/vlad/core.cljc#L260)
+  using the `translation` (by default [[english-translation]]).
+
+  See
+  [vlad.core/translate-errors](https://github.com/logaan/vlad/blob/1dd8d427578655148e5333b3e40f0fe0223ee5eb/src/vlad/core.cljc#L260)
+  for additional detail about error message generation."
+  ([form validation field-labels]
+   (validate form validation field-labels english-translation))
+  ([form validation field-labels translation]
+   (let [{errors   ::error
+          warnings ::warning} (->> (vlad/validate validation (:form/fields form))
+                                   (group-by #(get % :urgency ::error)))
+
+         errors   (-> errors
+                      (assign-names field-labels)
+                      (vlad/translate-errors translation))
+         warnings (-> warnings
+                      (assign-names field-labels)
+                      (vlad/translate-errors translation))]
+     (reduce (fn [form path]
+               (form/update-field-by-path form path
+                                          (fn [field]
+                                            (-> field
+                                                (assoc :field/errors (get errors path))
+                                                (assoc :field/warnings (get warnings path))))))
+             (validation/set-valid form (empty? errors))
+             (:form/field-paths form)))))

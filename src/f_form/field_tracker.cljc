@@ -1,39 +1,43 @@
 (ns f-form.field-tracker
-  "As events occur in the lifecycle of a field, its tracker accumulates its current
-  state or history.
+  "Tools to help a [[f-form.field]] accumulate history about its value and focus
+  state as lifecycle events occur to it.
 
   The lifecycle events are:
-  * `:initialized`, when the field is created or reset
-  * `:snapshot` when the field's value and initial-value are synced (and which is
-  also called on `:initialize`)
-  * `:focus-gained` when the field gains focus
-  * `:focus-lost`, when the field loses focus
-  * `:changed`, when the field's value changes
 
-  Custom trackers can be built to respond to these lifecycle events in arbitrary
-  ways. However, most apps will use a tracker that accumulates some or all of
-  the following state:
+  * `:initialized`, when the field is created or reset.
+  * `:snapshot`, when the field's value and initial-value are synced, for example
+    when the form has been submitted on a periodic timer. (Also called on
+    `:initialized`.)
+  * `:focus-gained`, when the field gains focus.
+  * `:focus-lost`, when the field loses focus.
+  * `:changed`, when the field's value changes.
+
+  The field history is summarized as:
 
   * `:field/visited?` - whether the field has ever received focus. Typically
-  used to call attention to incomplete or pending fields.
+    used to mark off complete fields or to call attention to incomplete or pending
+    fields.
   * `:field/active?` - whether the field currently has focus. Typically used to
-  add an outline or some other emphasis to the focused field, if this cannot be
-  done with CSS.
+    add an outline or some other emphasis to the focused field, if this cannot be
+    done with CSS.
   * `:field/touched?` - whether the field has ever lost focus. Typically used to
-  hide errors until the user has failed to take the opportunity to resolve them, or
-  to show a ✓ or some other indicator beside completed fields.
+    hide errors until the user has failed to take the opportunity to resolve them, or
+    to show a ✓ or some other indicator beside completed fields.
   * `:field/modified?` - whether the field's value has ever been changed (by a
-  user action). Typically used to allow the system to control the value of a
-  field until the user makes a choice, then to hand control of the value over to
-  them.
+    user action). Typically used to allow the system to control the value of a
+    field until the user makes a choice, then to hand control of the value over to
+    them.
   * `:field/pristine?` - whether the field's value is the same as its initial
-  value. Typically used to skip submission of unchanged fields.
+    value. Typically used to skip submission of unchanged fields.
+
+  The names of the history fields were influenced by Final Form
+  [FieldState](https://final-form.org/docs/final-form/types/FieldState).
 
   Since not every application design will care about every state change, and
   since there is a cost to tracking excess state (computationally when
   calculating the state, and in some cases when triggering unnecessary updates
   to a datastore) it is best to skip accumulation of unused state. This
-  namespace provides some tools to customize a tracker that accumulates a
+  namespace provides some tools to customize a [[tracker]] that accumulates a
   minimal amount of state.")
 
 (defn tracker
@@ -61,11 +65,7 @@
 
 (def default-tracker
   "A tracker which tracks only one of the five common pieces of state - `:field/touched?`."
-  (tracker #{#_:field/visited?
-             #_:field/active?
-             :field/touched?
-             #_:field/modified?
-             #_:field/pristine?}))
+  (tracker #{:field/touched?}))
 
 (defn pristine?
   "Whether the field's current value is the same as its initial value."
@@ -90,7 +90,7 @@
 
 (defn track
   "Track the `event` on the `field`, using the tracker configured on the field.
-  Returns a `field` with new state tracked on it."
+  Returns the `field` with new history tracked on it."
   [field event]
   (persistent!
    (reduce (fn [field tracked-field]

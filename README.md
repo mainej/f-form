@@ -59,6 +59,13 @@ do:
   not _how_ to submit. The tradeoff is that you have to inform `f-form` when you
   are submitting.
 
+## Learn more
+
+* See `examples/reagent` for a running example of how to use f-form in a reagent
+  project.
+* Run `bin/doc` to generate documentation, accessible at
+  `target/doc/index.html`.
+
 ## Alternatives
 
 - https://github.com/luciodale/fork Another good option. Does a lot of state
