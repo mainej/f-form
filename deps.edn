@@ -3,7 +3,9 @@
            :test  {:extra-paths ["test"]}
            :codox {:extra-deps {codox/codox {:mvn/version "0.10.7"}}
                    :exec-fn    codox.main/generate-docs
-                   :exec-args  {:source-paths ["src"]
+                   :exec-args  {:name         "f-form"
+                                :description  "Simple, immutable form management for Clojure(Script)"
+                                :source-paths ["src"]
                                 :doc-files    ["README.md"]
                                 :output-path  "gh-pages"
                                 :metadata     {:doc/format :markdown}

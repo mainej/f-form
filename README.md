@@ -1,6 +1,6 @@
 # f-form
 
-Functional form management for Clojure(Script), inspired by Final Form.
+Simple immutable form management for Clojure(Script).
 
 ## Installation
 
@@ -14,8 +14,8 @@ Functional form management for Clojure(Script), inspired by Final Form.
 
 ## Background
 
-[Final Form](https://final-form.org/) is a JS library for managing form state.
-`f-form` aims to be a pared down functional Clojure version of Final Form.
+`f-form` aims to be a pared down functional Clojure version of [Final
+Form][final-form], a JS library for managing form state.
 
 The primary goal of a form, on the web or in a CLI, is to collect data from a
 user. But data entry is only part of the story. Many UIs need to remember and
@@ -42,8 +42,8 @@ do:
   forms and update them over time. `f-form` expects you to choose and use your
   own state manager. The ClojureScript community has a rich set of options for
   managing state. If you are using React, you may want to store state locally
-  with reagent, or store it in a re-frame app-db. If you are using `f-form` in
-  another context, the choice is up to you.
+  with reagent, or in a re-frame app-db. If you are using `f-form` in another
+  context, the choice is up to you.
 * **No HTML or CSS.** `f-form` makes no decisions about how DOM elements are
   generated or how to style them. Actually, it doesn't care whether you are
   working in the DOM, in a CLI, or elsewhere. Instead, it provides the data you
@@ -61,28 +61,34 @@ do:
 
 ## Learn more
 
-* See
-  [`examples/reagent`](https://github.com/mainej/f-form/tree/master/examples/reagent)
-  for a running example of how to use f-form in a reagent project.
-* See the [API Docs](https://mainej.github.io/f-form/)
+* Run an example [reagent project that uses f-form][reagent-example].
+* See the [API Docs][docs].
+* Review the [code and tests][code].
 
 ## Develop
 
 * Run `bin/test` to run tests.
 * Run `bin/coverage` for an updated code coverage report.
 * Generate documentation
-    * After cloning this project, run `git fetch origin gh-pages && git worktree
-      add gh-pages gh-pages`.
+    * After cloning this project, run `git fetch origin gh-pages && git worktree add gh-pages gh-pages`.
     * Run `bin/doc` to generate documentation, accessible at `gh-pages/index.html`.
     * Run `bin/doc-release` to publish documentation to Github Pages.
 
 ## Alternatives
 
-- https://github.com/luciodale/fork Another good option. Does a lot of state
+- [`luciodale/fork`][fork] is another good option. It does a lot of state
   management internally, which ties it to reagent or re-frame and hides some
   useful functionality.
-- https://github.com/efraimmgon/reframe-forms As the name suggests, closely tied
-  to re-frame. Takes control of generating the HTML. Does its own state
-  management.
-- https://github.com/jkk/formative The maximal approach: validation, rendering,
-  even server-side parsing.
+- [`efraimmgon/reframe-forms`][reframe-forms], as the name suggests, is closely
+  tied to re-frame. It generates the HTML and does its own state management.
+- [`jkk/formative`][formative] is the maximal approach including validation,
+  rendering, even server-side parsing.
+
+[final-form]: https://final-form.org/
+[reagent-example]: https://github.com/mainej/f-form/tree/master/examples/reagent
+[docs]: https://mainej.github.io/f-form/
+[code]: https://github.com/mainej/f-form
+
+[fork]: https://github.com/luciodale/fork
+[reframe-forms]: https://github.com/efraimmgon/reframe-forms
+[formative]: https://github.com/jkk/formative
