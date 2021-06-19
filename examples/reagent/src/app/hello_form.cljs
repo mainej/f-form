@@ -61,6 +61,9 @@
                       {:message (str "You need a " (field-labels [:premium-account]) " to access all features.")})))))
 
 ;; STATE MANAGEMENT & VALIDATION
+;; EXAMPLE: If this were re-frame, this section would be several event handler
+;; and subscription registrations: `re-frame.core/reg-event-*` and
+;; `re-frame.core/reg-sub`.
 
 (defn validate-form [form]
   (form.vlad/validate form (validation form) field-labels))
@@ -99,6 +102,7 @@
   [props field]
   (cond-> props
     :always                (assoc :id (element-id field)
+                                  ;; NOTE: all field changes go through this one handler
                                   :on-change update-field)
     (field-invalid? field) (assoc :aria-invalid true
                                   :aria-describedby (errors-id field))))
@@ -198,32 +202,34 @@
 ;; HTML PAGE & FORM COMPONENTS
 
 (defn form []
-  (let [form @hello-form]
-    [:div.max-w-5xl.space-y-4
-     [:h1 "Welcome"]
-     [:p.space-y-4
-      [:code.block
-       "Note to developers: Field errors exist in the page but are hidden until
+  [:main.max-w-5xl.space-y-4
+   [:h1 "Welcome"]
+   [:p.space-y-4
+    [:code.block
+     "Note to developers: Field errors exist in the page but are hidden until
        each field is visited, so that users aren't met with a wall of red text.
        To expose the errors, tab through the fields."]
-      [:code.block
-       "When all errors (though not necessarily all warnings) have been
+    [:code.block
+     "When all errors (though not necessarily all warnings) have been
        resolved, the submit button will become enabled."]]
-     [:form.space-y-4 {:on-submit (fn [e]
-                                    (.preventDefault e)
-                                    (mock-submit!))}
-      [:div.grid.grid-cols-1.md:grid-cols-3.gap-1.md:gap-4
-       [basic-input {:auto-focus true} (form/field-by-path form [:full-name])]
-       [communication-style-input (form/field-by-path form [:communication-style])]
-       [password-input (form/field-by-path form [:password])]
-       [password-input (form/field-by-path form [:password-confirmation])]
-       [checkbox-input (form/field-by-path form [:premium-account])]]
-      [:button {:type     "submit"
-                :disabled (occupied? form)}
-       "Submit"]]
-     [:div
-      [:h2 "Invalid"]
-      [:code (pr-str (form/values form (filter #(seq (:field/errors %)))))]]
-     [:div
-      [:h2 "Valid"]
-      [:code (pr-str (form/values form (remove #(seq (:field/errors %)))))]]]))
+   ;; EXAMPLE: if this were re-frame, this would be a subscription
+   (let [form @hello-form]
+     [:div.space-y-4
+      [:form.space-y-4 {:on-submit (fn [e]
+                                     (.preventDefault e)
+                                     (mock-submit!))}
+       [:div.grid.grid-cols-1.md:grid-cols-3.gap-1.md:gap-4
+        [basic-input {:auto-focus true} (form/field-by-path form [:full-name])]
+        [communication-style-input (form/field-by-path form [:communication-style])]
+        [password-input (form/field-by-path form [:password])]
+        [password-input (form/field-by-path form [:password-confirmation])]
+        [checkbox-input (form/field-by-path form [:premium-account])]]
+       [:button {:type     "submit"
+                 :disabled (occupied? form)}
+        "Submit"]]
+      [:div
+       [:h2 "Invalid"]
+       [:code (pr-str (form/values form (filter #(seq (:field/errors %)))))]]
+      [:div
+       [:h2 "Valid"]
+       [:code (pr-str (form/values form (remove #(seq (:field/errors %)))))]]])])
