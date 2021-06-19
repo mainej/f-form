@@ -9,4 +9,6 @@
                                 :doc-files    ["README.md"]
                                 :output-path  "gh-pages"
                                 :metadata     {:doc/format :markdown}
-                                :source-uri   "https://github.com/mainej/f-form/blob/master/{filepath}#L{line}"}}}}
+                                :source-uri   "https://github.com/mainej/f-form/blob/master/{filepath}#L{line}"}}
+           :release {:extra-deps {applied-science/deps-library {:mvn/version "0.4.0"}}
+                     :main-opts  ["-m" "applied-science.deps-library"]}}}
