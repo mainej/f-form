@@ -16,10 +16,10 @@
   (assoc form :form/fields-valid? valid?))
 
 (defn valid?
-  "Check whether the `form` has any validation errors."
+  "Check whether the `form` has no validation errors."
   [form]
   (:form/fields-valid? form))
 
 (def invalid?
-  "Check whether the `form` has no validation errors."
+  "Check whether the `form` has some validation errors."
   (complement valid?))
