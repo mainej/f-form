@@ -4,7 +4,21 @@ Simple immutable form management for Clojure(Script).
 
 ## Installation
 
+Install from Clojars
+
 [![Clojars Project](https://img.shields.io/clojars/v/com.github.mainej/f-form.svg)](https://clojars.org/com.github.mainej/f-form)
+
+Install from Github
+
+```clojure
+# deps.edn
+{:deps
+  {mainej/f-form
+    {:git/url "https://github.com/mainej/f-form"
+     :sha "<recent sha>"}}}
+```
+
+Updating? See the [CHANGELOG.md][changelog]
 
 ## Background
 
@@ -70,12 +84,13 @@ do:
 - [`jkk/formative`][formative] is the maximal approach including validation,
   rendering, even server-side parsing.
 
-[final-form]: https://final-form.org/
-[reagent-example]: https://github.com/mainej/f-form/tree/master/examples/reagent
+[code]: https://github.com/mainej/f-form
 [docs]: https://mainej.github.io/f-form/
 [contrib]: https://mainej.github.io/f-form/CONTRIBUTING.md
-[code]: https://github.com/mainej/f-form
+[changelog]: https://mainej.github.io/f-form/CHANGELOG.md
+[reagent-example]: https://github.com/mainej/f-form/tree/master/examples/reagent
 
+[final-form]: https://final-form.org/
 [fork]: https://github.com/luciodale/fork
 [reframe-forms]: https://github.com/efraimmgon/reframe-forms
 [formative]: https://github.com/jkk/formative
