@@ -86,9 +86,9 @@ do:
 
 [code]: https://github.com/mainej/f-form
 [docs]: https://mainej.github.io/f-form/
-[contrib]: https://github.com/mainej/f-form/blob/master/CONTRIBUTING.md
-[changelog]: https://github.com/mainej/f-form/blob/master/CHANGELOG.md
-[reagent-example]: https://github.com/mainej/f-form/tree/master/examples/reagent
+[contrib]: https://github.com/mainej/f-form/blob/main/CONTRIBUTING.md
+[changelog]: https://github.com/mainej/f-form/blob/main/CHANGELOG.md
+[reagent-example]: https://github.com/mainej/f-form/tree/main/examples/reagent
 
 [final-form]: https://final-form.org/
 [fork]: https://github.com/luciodale/fork

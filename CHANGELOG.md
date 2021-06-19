@@ -15,7 +15,7 @@ Initial Clojars release
 ### Added
 - Core utilities for creating and interacting with forms and fields.
 
-[Unreleased]: https://github.com/mainej/f-form/compare/v0.2.0...master
+[Unreleased]: https://github.com/mainej/f-form/compare/v0.2.0...main
 [0.2.0]: https://github.com/mainej/f-form/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/mainej/f-form/compare/v0.0.1...v0.1.0
 [0.0.1]: https://github.com/mainej/f-form/tree/v0.0.1
