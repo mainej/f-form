@@ -84,6 +84,12 @@ do:
 - [`jkk/formative`][formative] is the maximal approach including validation,
   rendering, even server-side parsing.
 
+## License
+
+Copyright © 2021 Jacob Maine
+
+Distributed under the MIT License.
+
 [code]: https://github.com/mainej/f-form
 [docs]: https://mainej.github.io/f-form/
 [contrib]: https://github.com/mainej/f-form/blob/main/CONTRIBUTING.md
