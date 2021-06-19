@@ -4,7 +4,7 @@ log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.1.1] - 2021-06-18
+## [0.2.0] - 2021-06-18
 ### Added
 - Contributing guidelines and change log.
 
@@ -15,6 +15,6 @@ Initial Clojars release
 ### Added
 - Core utilities for creating and interacting with forms and fields.
 
-[Unreleased]: https://github.com/mainej/headlessui-reagent/compare/v0.1.1...master
-[0.1.0]: https://github.com/mainej/headlessui-reagent/compare/v0.1.0...v0.1.1
+[Unreleased]: https://github.com/mainej/headlessui-reagent/compare/v0.2.0...master
+[0.2.0]: https://github.com/mainej/headlessui-reagent/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/mainej/headlessui-reagent/compare/v0.0.1...v0.1.0
