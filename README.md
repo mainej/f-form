@@ -4,12 +4,12 @@ Simple immutable form management for Clojure(Script).
 
 ## Installation
 
-```
+```clojure
 # deps.edn
 {:deps
   {mainej/f-form
     {:git/url "https://github.com/mainej/f-form"
-     :sha "8f3dfa848f2fa93cad8fe370aadb172c0181582e"}}}
+     :sha "09f88761722926367fd434304c30b24b18d1d0e8"}}}
 ```
 
 ## Background
