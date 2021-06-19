@@ -58,15 +58,7 @@ do:
 * Run an example [reagent project that uses f-form][reagent-example].
 * See the [API Docs][docs].
 * Review the [code and tests][code].
-
-## Develop
-
-* Run `bin/test` to run tests.
-* Run `bin/coverage` for an updated code coverage report.
-* Generate documentation
-    * After cloning this project, run `git fetch origin gh-pages && git worktree add gh-pages gh-pages`.
-    * Run `bin/doc` to generate documentation, accessible at `gh-pages/index.html`.
-    * Run `bin/doc-release` to publish documentation to Github Pages.
+* Interested in contributing? Review the [contributing guidelines][contrib].
 
 ## Alternatives
 
@@ -81,6 +73,7 @@ do:
 [final-form]: https://final-form.org/
 [reagent-example]: https://github.com/mainej/f-form/tree/master/examples/reagent
 [docs]: https://mainej.github.io/f-form/
+[contrib]: https://mainej.github.io/f-form/CONTRIBUTING.md
 [code]: https://github.com/mainej/f-form
 
 [fork]: https://github.com/luciodale/fork
