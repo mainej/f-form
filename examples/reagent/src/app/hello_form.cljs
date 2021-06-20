@@ -1,4 +1,10 @@
 (ns app.hello-form
+  "An example of f-form working with reagent.
+
+  See the README.md for instructions on running this code.
+
+  While reviewing, keep an eye out for EXAMPLE annotations. They highlight
+  certain pieces of f-form functionality."
   (:require [clojure.string :as string]
             [f-form.dom :as form.dom]
             [f-form.field :as field]
@@ -9,7 +15,7 @@
             [reagent.core :as r]
             [vlad.core :as vlad]))
 
-;; DATA & DEFINITIONS
+;;;; DATA & DEFINITIONS
 
 (def field-labels
   {[:full-name]             "Full Name"
@@ -53,17 +59,18 @@
                                                :first-name  (field-labels [:password-confirmation])
                                                :second-name (field-labels [:password])}))
    (form.vlad/field [:premium-account]
-                    ;; EXAMPLE: non-blocking warnings (2)
+                    ;; EXAMPLE: non-blocking warnings (1)
                     (form.vlad/warning
                      (vlad/predicate
                       #(not (true? %))
                       ;; EXAMPLE: custom error messages
                       {:message (str "You need a " (field-labels [:premium-account]) " to access all features.")})))))
 
-;; STATE MANAGEMENT & VALIDATION
+;;;; STATE MANAGEMENT & VALIDATION
+
 ;; EXAMPLE: If this were re-frame, this section would be several event handler
-;; and subscription registrations: `re-frame.core/reg-event-*` and
-;; `re-frame.core/reg-sub`.
+;;          and subscription registrations: `re-frame.core/reg-event-*` and
+;;          `re-frame.core/reg-sub`.
 
 (defn validate-form [form]
   (form.vlad/validate form (validation form) field-labels))
@@ -86,7 +93,7 @@
   (swap! hello-form form/submitting)
   (js/setTimeout submitted! 3000))
 
-;; HTML UTILS
+;;;; HTML UTILS
 
 (defn element-id [{:keys [field/path]}]
   (str "element-" (string/join "-" path)))
@@ -112,13 +119,13 @@
   (or (form/submitting? form)
       (form.validation/invalid? form)))
 
-;; HTML WRAPPERS
+;;;; HTML WRAPPERS
 
 (defn errors-list
   [shown? color errors]
   (when (seq errors)
     [:ul.space-y-1
-     {:class [color (when (not shown?) :sr-only)]}
+     {:class [color (when-not shown? :sr-only)]}
      (for [[i error] (map-indexed vector errors)]
        ^{:key i}
        [:li error])]))
@@ -140,7 +147,7 @@
    [:div.space-y-1 {:id (errors-id field)}
     ;; EXAMPLE: use :field/touched? to delay error feedback until after interaction (2)
     [errors-list touched? :text-yellow warnings]
-    ;; EXAMPLE: non-blocking warnings (1)
+    ;; EXAMPLE: non-blocking warnings (2)
     [errors-list touched? :text-red errors]]])
 
 (defn field-label [{:keys [field/path] :as field}]
@@ -154,7 +161,7 @@
    [:div child-input]
    [field-status field]])
 
-;; HTML INPUT COMPONENTS
+;;;; HTML INPUT COMPONENTS
 
 (defn basic-input
   ([field] [basic-input {} field])
@@ -199,7 +206,7 @@
                        :option-value :comms.style/id
                        :option-body  :comms.style/text}])
 
-;; HTML PAGE & FORM COMPONENTS
+;;;; HTML PAGE & FORM COMPONENTS
 
 (defn form []
   [:main.max-w-5xl.space-y-4
