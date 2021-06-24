@@ -2,7 +2,7 @@
 
 set -Eeuo pipefail
 
-exec clj -A:vlad:test -Sdeps '{:deps {cloverage/cloverage {:mvn/version "RELEASE"}}}' -m cloverage.coverage \
+exec clojure -A:vlad:test -Sdeps '{:deps {cloverage/cloverage {:mvn/version "RELEASE"}}}' -m cloverage.coverage \
   --src-ns-path src \
   --test-ns-path 'test' \
   --test-ns-regex '.*test'

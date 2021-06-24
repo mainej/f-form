@@ -2,4 +2,4 @@
 
 set -Eeuo pipefail
 
-exec clj -A:test:runner:vlad
+exec clojure -M:test:runner:vlad "$@"

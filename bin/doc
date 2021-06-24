@@ -2,4 +2,4 @@
 
 set -Eeuo pipefail
 
-exec clj -A:vlad -X:codox
+exec clojure -A:vlad -X:codox
