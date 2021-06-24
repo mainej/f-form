@@ -1,14 +1,18 @@
 {:paths   ["src"]
- :aliases {:vlad  {:extra-deps {vlad/vlad {:mvn/version "3.3.2"}}}
-           :test  {:extra-paths ["test"]}
-           :codox {:extra-deps {codox/codox {:mvn/version "0.10.7"}}
-                   :exec-fn    codox.main/generate-docs
-                   :exec-args  {:name         "f-form"
-                                :description  "Simple, immutable form management for Clojure(Script)"
-                                :source-paths ["src"]
-                                :doc-files    ["README.md"]
-                                :output-path  "gh-pages"
-                                :metadata     {:doc/format :markdown}
-                                :source-uri   "https://github.com/mainej/f-form/blob/main/{filepath}#L{line}"}}
+ :aliases {:vlad    {:extra-deps {vlad/vlad {:mvn/version "3.3.2"}}}
+           :test    {:extra-paths ["test"]}
+           :runner  {:extra-deps {com.cognitect/test-runner
+                                  {:git/url "https://github.com/cognitect-labs/test-runner"
+                                   :sha     "3cb0a9daf1cb746259dc8309b218f9211ad3b33b"}}
+                     :main-opts  ["-m" "cognitect.test-runner"]}
+           :codox   {:extra-deps {codox/codox {:mvn/version "0.10.7"}}
+                     :exec-fn    codox.main/generate-docs
+                     :exec-args  {:name         "f-form"
+                                  :description  "Simple, immutable form management for Clojure(Script)"
+                                  :source-paths ["src"]
+                                  :doc-files    ["README.md"]
+                                  :output-path  "gh-pages"
+                                  :metadata     {:doc/format :markdown}
+                                  :source-uri   "https://github.com/mainej/f-form/blob/main/{filepath}#L{line}"}}
            :release {:extra-deps {applied-science/deps-library {:mvn/version "0.4.0"}}
                      :main-opts  ["-m" "applied-science.deps-library"]}}}
