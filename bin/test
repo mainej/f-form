@@ -2,4 +2,10 @@
 
 set -Eeuo pipefail
 
-exec clojure -M:test:runner:vlad "$@"
+# all tests in some nses:
+# bin/test :nses "[dom-test]"
+
+# a few specific tests:
+# bin/test :vars "[dom-test/input-props]"
+
+exec clojure -A:test:vlad -X:runner "$@"
