@@ -4,11 +4,11 @@ Simple immutable form management for Clojure(Script).
 
 ## Installation
 
-Install from Clojars
+Install from Clojars:
 
 [![Clojars Project](https://img.shields.io/clojars/v/com.github.mainej/f-form.svg)](https://clojars.org/com.github.mainej/f-form)
 
-Install from Github
+Install from Github:
 
 ```clojure
 # deps.edn
@@ -18,7 +18,7 @@ Install from Github
      :sha "<recent sha>"}}}
 ```
 
-Updating? See the [CHANGELOG.md][changelog]
+Updating? See the [CHANGELOG.md][changelog].
 
 ## Background
 

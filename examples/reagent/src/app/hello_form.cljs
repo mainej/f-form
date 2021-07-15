@@ -146,9 +146,9 @@
       :else                  "✓")]
    [:div.space-y-1 {:id (errors-id field)}
     ;; EXAMPLE: use :field/touched? to delay error feedback until after interaction (2)
-    [errors-list touched? :text-yellow warnings]
+    [errors-list touched? :text-red errors]
     ;; EXAMPLE: non-blocking warnings (2)
-    [errors-list touched? :text-red errors]]])
+    [errors-list touched? :text-yellow warnings]]])
 
 (defn field-label [{:keys [field/path] :as field}]
   [:label {:for (element-id field)} [:span (get field-labels path)]])
@@ -220,6 +220,9 @@
      "When all errors (though not necessarily all warnings) have been
        resolved, the submit button will become enabled."]]
    ;; EXAMPLE: if this were re-frame, this would be a subscription
+   ;; If a form has many fields, it's better to subscribe to each one
+   ;; individually, rather than to the form as a whole, to avoid re-rendering
+   ;; every field whenever one of them has any interaction.
    (let [form @hello-form]
      [:div.space-y-4
       [:form.space-y-4 {:on-submit (fn [e]
