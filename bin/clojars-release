@@ -3,4 +3,17 @@
 set -Eeuo pipefail
 
 # expects --patch, --minor, or --major
-clojure -M:release "$@"
+# TODO restore this when applied-science/deps-library is updated to use a
+# version of workframers/garamond that uses a modern version of tools.deps.alpha
+# clojure -M:release "$@"
+
+# TODO delete this in favor of above version
+# expects --version 0.2.1
+# does not support --patch, --minor or --major, because running `tag` bumps the
+# git tag and then the subsequent commands bump again, a problem that doesn't
+# manifest when all the commands are run in one process
+clojure -M:release tag "$@"
+clojure -M:release pom "$@"
+clojure -Spom # fix pom, adding <optional> to vlad dep
+clojure -M:release jar "$@"
+clojure -M:release deploy "$@"
