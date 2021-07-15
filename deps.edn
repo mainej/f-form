@@ -1,6 +1,7 @@
 {:paths   ["src"]
- :aliases {:vlad    {:extra-deps {vlad/vlad {:mvn/version "3.3.2"}}}
-           :test    {:extra-paths ["test"]}
+ :deps    {vlad/vlad {:mvn/version "3.3.2"
+                      :optional true}}
+ :aliases {:test    {:extra-paths ["test"]}
            :runner  {:extra-deps {io.github.cognitect-labs/test-runner
                                   {:git/url "https://github.com/cognitect-labs/test-runner.git"
                                    :sha     "705ad25bbf0228b1c38d0244a36001c2987d7337"}}

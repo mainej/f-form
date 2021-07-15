@@ -8,4 +8,4 @@ set -Eeuo pipefail
 # a few specific tests:
 # bin/test :vars "[dom-test/input-props]"
 
-exec clojure -A:test:vlad -X:runner "$@"
+exec clojure -A:test -X:runner "$@"
