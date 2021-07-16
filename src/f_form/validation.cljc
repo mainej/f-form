@@ -20,6 +20,6 @@
   [form]
   (:form/fields-valid? form))
 
-(def invalid?
+(def ^{:arglists '([form])} invalid?
   "Check whether the `form` has some validation errors."
   (complement valid?))
