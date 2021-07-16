@@ -8,11 +8,27 @@ set -Eeuo pipefail
 # clojure -M:release "$@"
 
 # TODO delete this in favor of above version
-# expects --version 0.2.1
-# does not support --patch, --minor or --major, because running `tag` bumps the
-# git tag and then the subsequent commands bump again, a problem that doesn't
-# manifest when all the commands are run in one process
-clojure -M:release tag "$@"
+msg() {
+    echo >&2 -e "${1-}"
+}
+
+die() {
+    local msg=$1
+    local code=${2-1} # default exit status 1
+    msg "$msg"
+    exit "$code"
+}
+
+incr_flag=''
+if [[ "${1-}" == "--patch" || "${1-}" == "--minor" || "${1-}" == "--major" ]]; then
+    incr_flag="${1-}"
+    shift
+else
+    die "Missing required parameter: --patch, --minor or --major"
+fi
+
+
+clojure -M:release tag "${incr_flag}" "$@"
 clojure -M:release pom "$@"
 clojure -Spom # fix pom, adding <optional> to vlad dep
 clojure -M:release jar "$@"
