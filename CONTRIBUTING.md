@@ -25,12 +25,7 @@ TODO: establish contributing guidelines here.
 Deploy to Clojars -- needs `CLOJARS_USERNAME` and `CLOJARS_PASSWORD` environment
 variables:
 
-NOT: 
     $ envdir ../../env/clojars bin/clojars-release --patch # patch, minor, or major
-
-But, temporarily (see bin/clojars-release for explanation):
-
-    $ envdir ../../env/clojars bin/clojars-release --version X.Y.Z
 
 The library will be deployed to [clojars.org][clojars].
 
