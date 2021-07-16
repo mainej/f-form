@@ -132,3 +132,44 @@
       (on-change {:entity/attr "value"})
       (t/is (= {:entity/attr "value"}
                (:field/value (current-field)))))))
+
+(defn trace-call [f]
+  (let [!called (atom false)]
+    [!called (fn [& args]
+               (let [result (apply f args)]
+                 (reset! !called true)
+                 result))]))
+
+(t/deftest focus-and-blur-handlers
+  (t/testing "track field state, when tracker is enabled"
+    (let [!form         (atom (form/init [(field/init [:x] nil tracker/full-tracker)]))
+          current-field #(form/field-by-path @!form [:x])
+
+          [!focused traced-on-focus]  (trace-call (partial update-field! !form))
+          [!blurred traced-on-blur]   (trace-call (partial update-field! !form))
+
+          {:keys [on-focus on-blur]}
+          (f-form.dom/input {:on-focus  traced-on-focus
+                             :on-blur   traced-on-blur}
+                            (current-field))]
+      (on-focus (mock-event))
+      (on-blur (mock-event))
+      (t/is (:field/visited? (current-field)))
+      (t/is (:field/touched? (current-field)))
+      (t/is @!focused)
+      (t/is @!blurred)))
+  (t/testing "default to change handler"
+    (let [!form         (atom (form/init [(field/init [:x] nil tracker/full-tracker)]))
+          current-field #(form/field-by-path @!form [:x])
+
+          [!changed traced-on-change] (trace-call (partial update-field! !form))
+
+          {:keys [on-focus on-blur]}
+          (f-form.dom/input {:on-change traced-on-change}
+                            (current-field))]
+      (on-focus (mock-event))
+      (on-blur (mock-event))
+      (t/is (:field/visited? (current-field)))
+      (t/is (:field/touched? (current-field)))
+      (t/is (not (:field/modified? (current-field))))
+      (t/is @!changed))))
