@@ -75,19 +75,37 @@
 (defn validate-form [form]
   (form.vlad/validate form (validation form) field-labels))
 
-(def hello-form
+(defonce hello-form
   ;; EXAMPLE: external state management (initial)
   ;; EXAMPLE: validation (initial)
   (r/atom (validate-form (new-form))))
 
-(defn update-field [path update-fn _dom-event]
+(defn update-field! [path update-fn _dom-event]
   ;; EXAMPLE: external state management (on change)
   (swap! hello-form (fn [form]
                       ;; EXAMPLE: validation (on change)
                       (validate-form (form/update-field-by-path form path update-fn)))))
 
+(defn- update-fields [form update-fn]
+  (reduce (fn [form {:keys [field/path]}]
+            (form/update-field-by-path form path update-fn))
+          form
+          (form/fields form)))
+
 (defn submitted! []
-  (swap! hello-form form/submitted))
+  (swap! hello-form
+         (fn [form]
+           (-> form
+               ;; Re-enable submit button. It's important to do this when a
+               ;; submission fails on the server so the user has a chance to
+               ;; re-submit. If the submissions succeeds on the server you may
+               ;; not need it, because you will likely be discarding the whole
+               ;; form.
+               form/submitted
+               ;; Example: Normally you wouldn't do this... for the purposes of
+               ;; the example, discard the fields' history, as if you had
+               ;; arrived at this page with the data you have just submitted.
+               (update-fields field/discard-history)))))
 
 (defn mock-submit! []
   (if (form.validation/valid? @hello-form)
@@ -96,7 +114,7 @@
                           (-> form
                               form/submitting
                               (dissoc :form/show-validation?))))
-      (js/setTimeout submitted! 3000))
+      (js/setTimeout submitted! 2000))
     (swap! hello-form assoc :form/show-validation? true)))
 
 (defn show-validation? []
@@ -119,7 +137,7 @@
   (cond-> props
     :always                (assoc :id (element-id field)
                                   ;; NOTE: all field changes go through this one handler
-                                  :on-change update-field)
+                                  :on-change update-field!)
     (field-invalid? field) (assoc :aria-invalid true
                                   :aria-describedby (errors-id field))))
 
@@ -231,6 +249,7 @@
    (let [form @hello-form]
      [:div.space-y-4
       [:form.space-y-4 {:on-submit (fn [e]
+                                     (.stopPropagation e)
                                      (.preventDefault e)
                                      (mock-submit!))}
        [:div.grid.grid-cols-1.md:grid-cols-3.gap-1.md:gap-4

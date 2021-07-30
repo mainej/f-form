@@ -5,6 +5,8 @@ log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 ## [Unreleased]
 ### Added
 - More granular tools for manipulating a field's value and history.
+- Example app: Demonstration of more granular field manipulation.
+- Example app: Demonstration of displaying all errors instead of submitting.
 ### Fixed
 - Reseting a field would discard any information attached to it outside of the
   f-form library.
