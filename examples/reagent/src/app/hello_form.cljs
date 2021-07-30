@@ -90,8 +90,17 @@
   (swap! hello-form form/submitted))
 
 (defn mock-submit! []
-  (swap! hello-form form/submitting)
-  (js/setTimeout submitted! 3000))
+  (if (form.validation/valid? @hello-form)
+    (do
+      (swap! hello-form (fn [form]
+                          (-> form
+                              form/submitting
+                              (dissoc :form/show-validation?))))
+      (js/setTimeout submitted! 3000))
+    (swap! hello-form assoc :form/show-validation? true)))
+
+(defn show-validation? []
+  (:form/show-validation? @hello-form))
 
 ;;;; HTML UTILS
 
@@ -114,18 +123,14 @@
     (field-invalid? field) (assoc :aria-invalid true
                                   :aria-describedby (errors-id field))))
 
-;; EXAMPLE: rendezvous for all reasons to disable submit (1)
-(defn occupied? [form]
-  (or (form/submitting? form)
-      (form.validation/invalid? form)))
-
 ;;;; HTML WRAPPERS
 
 (defn errors-list
-  [shown? color errors]
+  [touched? color errors]
   (when (seq errors)
     [:ul.space-y-1
-     {:class [color (when-not shown? :sr-only)]}
+     {:class [color (when-not (or touched? (show-validation?))
+                      :sr-only)]}
      (for [[i error] (map-indexed vector errors)]
        ^{:key i}
        [:li error])]))
@@ -234,9 +239,13 @@
         [password-input (form/field-by-path form [:password])]
         [password-input (form/field-by-path form [:password-confirmation])]
         [checkbox-input (form/field-by-path form [:premium-account])]]
-       [:button {:type     "submit"
-                 :disabled (occupied? form)}
-        "Submit"]]
+       [:div
+        (when (and (show-validation?)
+                   (form.validation/invalid? form))
+          [:p.text-red "Please fix errors."])
+        [:button {:type     "submit"
+                  :disabled (form/submitting? form)}
+         "Submit" (when (form/submitting? form) "...")]]]
       [:div
        [:h2 "Invalid"]
        [:code (pr-str (form/values form (filter #(seq (:field/errors %)))))]]
