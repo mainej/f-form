@@ -12,7 +12,7 @@ TODO: establish contributing guidelines here.
 ### Prepare
 
 1. Run `bin/preview-tag` to learn new version number.
-2. Proactively update CHANGELOG.md for new version numnber.
+2. Proactively update CHANGELOG.md for new version number.
 3. Commit
 4. Tag commit `bin/tag-release`
 

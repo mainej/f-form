@@ -16,6 +16,7 @@
                             :user    nil
                             :project "deps.edn"}))
 (def jar-file (format "target/%s-%s.jar" (name lib) version))
+(def pom-dir (jio/file (b/resolve-path class-dir) "META-INF" "maven" (namespace lib) (name lib)))
 
 (defn current-tag [params]
   (println tag)
@@ -37,12 +38,19 @@
      (println message))
    (System/exit code)))
 
+(defn git-rev []
+  (let [{:keys [exit out]} (b/process {:command-args ["git" "rev-parse" "HEAD"]
+                                       :out          :capture})]
+    (when (zero? exit)
+      (string/trim out))))
+
 (defn jar [params]
   (b/write-pom {:class-dir class-dir
                 :lib       lib
                 :version   version
                 :basis     basis
                 :src-dirs  ["src"]})
+  (spit (jio/file pom-dir "pom.properties") (str "\nrevision=" (git-rev)) :append true)
   (b/copy-dir {:src-dirs   ["src" "resources"]
                :target-dir class-dir})
   (b/jar {:class-dir class-dir
@@ -64,11 +72,12 @@
   params)
 
 (defn assert-scm-tagged [params]
-  (when-not (zero? (-> {:command-args ["git" "rev-list" tag]
-                        :out          :ignore
-                        :err          :ignore}
-                       b/process
-                       :exit))
+  (when-not (-> {:command-args ["git" "rev-list" tag]
+                 :out          :ignore
+                 :err          :ignore}
+                b/process
+                :exit
+                zero?)
     (die 12 "Git tag %s must exist." tag))
   (let [{:keys [exit out]} (b/process {:command-args ["git" "describe" "--tags" "--abbrev=0" "--exact-match"]
                                        :out          :capture})]
@@ -78,11 +87,10 @@
   params)
 
 (defn git-push []
-  (when-not (zero? (-> {:command-args ["git" "push" "--follow-tags"]
-                        :out          :ignore
-                        :err          :ignore}
-                       b/process
-                       :exit))
+  (when-not (-> {:command-args ["git" "push" tag]}
+                b/process
+                :exit
+                zero?)
     (die 14 "Couldn't sync with github.")))
 
 (defn release [params]
@@ -92,8 +100,7 @@
   (jar params)
   (d/deploy {:installer :remote
              :artifact  jar-file
-             :pom-file  (jio/file (b/resolve-path class-dir) "META-INF" "maven"
-                                  (namespace lib) (name lib) "pom.xml")})
+             :pom-file  (jio/file pom-dir "pom.xml")})
   (git-push)
   params)
 

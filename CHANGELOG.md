@@ -4,6 +4,9 @@ log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.2.79] - 2021-07-30
+Pin clojars release to a git sha.
+
 ## [0.2.78] - 2021-07-30
 ### Added
 - Switched build tools to clojure.tools.build
@@ -31,7 +34,8 @@ Initial Clojars release
 ### Added
 - Core utilities for creating and interacting with forms and fields.
 
-[Unreleased]: https://github.com/mainej/f-form/compare/v0.2.78...main
+[Unreleased]: https://github.com/mainej/f-form/compare/v0.2.79...main
+[0.2.79]: https://github.com/mainej/f-form/compare/v0.2.78...v0.2.79
 [0.2.78]: https://github.com/mainej/f-form/compare/v0.2.1...v0.2.78
 [0.2.1]: https://github.com/mainej/f-form/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/mainej/f-form/compare/v0.1.0...v0.2.0
