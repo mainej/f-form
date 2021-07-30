@@ -21,29 +21,60 @@
   See [[f-form.dom]] for tools to attach a field to a DOM node."
   (:require [f-form.field-tracker :as tracker]))
 
-(defn snapshot
-  "Record that a field has been saved externally, e.g. to indicate that a field
-  has been synchronized with a backend server. This is a relative of [[reset]]:
-  reset reverts the `:field/value` \"backward\" to the `:field/initial-value`,
-  but this advances the `:field/initial-value` \"forward\" to the current
-  `:field/value`. Unlike `reset`, `snapshot` does not discard history about the
-  field's focus state."
+(defn discard-interaction-history
+  "Discard history established by the tracker about the `field`'s focus state."
   [field]
-  (-> field
-      (assoc :field/initial-value (:field/value field))
-      (tracker/track :snapshot)))
+  (tracker/track field :initialized))
+
+(defn discard-value-history
+  "Discard history established by the tracker about the `field`'s value."
+  [field]
+  (tracker/track field :snapshot))
+
+(defn discard-history
+  "Discard all history established by the tracker about the `field`."
+  [field]
+  (-> field (discard-value-history) (discard-interaction-history)))
+
+(defn reset-value
+  "Revert the field's `:field/value` \"backward\" to the `:field/initial-value`.
+  This is a relative of [[snapshot-value]] which advances the field's value
+  forward."
+  [field]
+  (assoc field :field/value (:field/initial-value field)))
+
+(defn snapshot-value
+  "Advance the field's `:field/initial-value` \"forward\" to the current
+  `:field/value`. This is a relative of [[reset-value]] which reverts the
+  field's value backward. To also reset the value tracking, see
+  [[discard-value-history]], or for both, use [[snapshot]]."
+  [field]
+  (assoc field :field/initial-value (:field/value field)))
 
 (defn init
-  "Initialize the field, at the given `path`, with the provided `value`, and
-  configured to track changes with the `tracker`."
+  "Initialize the field, at the given `path`, with the provided `value` (default
+  `nil`), and configured to track changes with the `tracker` (default
+  `tracker/default-tracker`)."
   ([path] (init path nil))
   ([path value] (init path value tracker/default-tracker))
   ([path value tracker]
    (-> {:field/path    path
         :field/value   value
         :field/tracker tracker}
-       (tracker/track :initialized)
-       (snapshot))))
+       (snapshot-value)
+       (discard-history))))
+
+(defn snapshot
+  "Snapshot the field's value with [[snapshot-value]] and reset its value
+  history with [[discard-value-history]].
+
+  This may be useful to record that a field has been saved externally, e.g. to
+  indicate that it has been synchronized with a backend server.
+
+  Unlike [[reset]], `snapshot` does not discard history about the field's focus
+  state."
+  [field]
+  (-> field (snapshot-value) (discard-value-history)))
 
 (defn reset
   "Abandon all changes to a `field`, including any accumulated state history

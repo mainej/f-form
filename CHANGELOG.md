@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file. This change
 log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased]
+### Added
+- More granular tools for manipulating a field's value and history.
 
 ## [0.2.1] - 2021-07-15
 ### Added
