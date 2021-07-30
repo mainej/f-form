@@ -7,5 +7,6 @@
                     :exec-fn    cognitect.test-runner.api/test}
            :build  {:paths      ["dev"]
                     :deps       {io.github.clojure/tools.build {:git/tag "v0.1.6" :git/sha "1e7c0197"}
-                                 slipset/deps-deploy           {:mvn/version "0.1.5"}}
+                                 slipset/deps-deploy           {:mvn/version "0.1.5"}
+                                 org.clojure/data.zip          {:mvn/version "1.0.0"}}
                     :ns-default build}}}

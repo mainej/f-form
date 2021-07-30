@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.github.mainej</groupId>
-  <artifactId>f-form</artifactId>
-  <name>f-form</name>
+  <groupId><!-- GENERATED --></groupId>
+  <artifactId><!-- GENERATED --></artifactId>
+  <name><!-- GENERATED --></name>
   <version><!-- GENERATED --></version>
   <description>Simple, immutable form management for Clojure(Script)</description>
   <url>https://github.com/mainej/f-form</url>
@@ -17,7 +17,7 @@
     <!-- GENERATED -->
   </dependencies>
   <build>
-    <sourceDirectory>src</sourceDirectory>
+      <sourceDirectory><!-- GENERATED --></sourceDirectory>
   </build>
   <repositories>
     <repository>
@@ -34,5 +34,6 @@
     <url>https://github.com/mainej/f-form</url>
     <connection>scm:git:git@github.com:mainej/f-form.git</connection>
     <developerConnection>scm:git:git@github.com:mainej/f-form.git</developerConnection>
+    <tag><!-- GENERATED --></tag>
   </scm>
 </project>

@@ -1,10 +1,11 @@
 (ns build
-  (:require [clojure.tools.build.api :as b]
-            [deps-deploy.deps-deploy :as d]
-            [clojure.data.xml :as xml]
-            [clojure.zip :as zip]
+  (:require [clojure.data.xml :as xml]
+            [clojure.data.zip.xml :as zip-xml]
             [clojure.java.io :as jio]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [clojure.tools.build.api :as b]
+            [clojure.zip :as zip]
+            [deps-deploy.deps-deploy :as d]))
 
 (xml/alias-uri 'pom "http://maven.apache.org/POM/4.0.0")
 
@@ -57,17 +58,15 @@
 
   ;; insert git revision as pom.xml > project > scm > tag
   (let [pom-file (jio/file pom-dir "pom.xml")
-        scm      (loop [child (-> (xml/parse (jio/input-stream pom-file)
-                                             :skip-whitespace true)
-                                  zip/xml-zip
-                                  ;; start at first child of project
-                                  zip/down)]
-                   (if (= ::pom/scm (:tag (zip/node child)))
-                     child
-                     (recur (zip/right child))))
-        pom      (-> scm
-                     (zip/append-child (xml/sexp-as-element [::pom/tag (git-rev)]))
-                     (zip/root))]
+        rev-tag  (xml/sexp-as-element [::pom/tag (git-rev)])
+        scm      (-> (xml/parse (jio/input-stream pom-file)
+                                :skip-whitespace true)
+                     zip/xml-zip
+                     (zip-xml/xml1-> ::pom/project ::pom/scm))
+        pom      (zip/root
+                  (if-let [existing-child (zip-xml/xml1-> scm ::pom/tag)]
+                    (zip/edit existing-child (constantly rev-tag))
+                    (zip/append-child scm rev-tag)))]
     (spit pom-file (xml/indent-str pom)))
 
   params)
@@ -112,15 +111,15 @@
 
 (defn git-push [params]
   (when (or (-> {:command-args ["git" "push" "origin" tag]
-                 :out :ignore
-                 :err :ignore}
+                 :out          :ignore
+                 :err          :ignore}
                 b/process
                 :exit
                 zero?
                 not)
             (-> {:command-args ["git" "push" "origin"]
-                 :out :ignore
-                 :err :ignore}
+                 :out          :ignore
+                 :err          :ignore}
                 b/process
                 :exit
                 zero?
@@ -142,10 +141,10 @@
 (comment
   (clean nil)
   (jar nil)
-  (:libs (b/create-basis {#_#_:root    nil
-                          :user    nil
-                          :project "deps.edn"
-                          :aliases [:release]}))
+  (:libs (b/create-basis {#_#_:root nil
+                          :user     nil
+                          :project  "deps.edn"
+                          :aliases  [:release]}))
 
   (str lib)
 
