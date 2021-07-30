@@ -25,7 +25,7 @@
   (update form :form/fields assoc-in path field))
 
 (defn update-field-by-path
-  "Update a field at the provided `path`, as with [[clojure.core/update]]. If
+  "Update a field at the provided `path`, as with `clojure.core/update`. If
   the field does not exist, the update is ignored."
   [form path f & args]
   (if-let [field (field-by-path form path)]

@@ -11,7 +11,7 @@
   the value before any changes.)
 
   It has a `:field/path`, which uniquely identifies it in its form. The path is
-  a sequence of keys as defined by [[clojure.core/assoc-in]].
+  a sequence of keys as defined by `clojure.core/assoc-in`.
 
   And finally, it has a `:field/tracker`. The tracker defines which other state
   and history attributes will be stored on the field. See
