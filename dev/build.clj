@@ -111,10 +111,20 @@
   params)
 
 (defn git-push [params]
-  (when-not (-> {:command-args ["git" "push" "origin" tag]}
+  (when (or (-> {:command-args ["git" "push" "origin" tag]
+                 :out :ignore
+                 :err :ignore}
                 b/process
                 :exit
-                zero?)
+                zero?
+                not)
+            (-> {:command-args ["git" "push" "origin"]
+                 :out :ignore
+                 :err :ignore}
+                b/process
+                :exit
+                zero?
+                not))
     (die 14 "Couldn't sync with github."))
   params)
 
