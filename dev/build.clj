@@ -86,12 +86,13 @@
       (die 13 "Git tag %s must be on HEAD." tag)))
   params)
 
-(defn git-push []
-  (when-not (-> {:command-args ["git" "push" tag]}
+(defn git-push [params]
+  (when-not (-> {:command-args ["git" "push" "origin" tag]}
                 b/process
                 :exit
                 zero?)
-    (die 14 "Couldn't sync with github.")))
+    (die 14 "Couldn't sync with github."))
+  params)
 
 (defn release [params]
   (assert-scm-clean params)
@@ -101,7 +102,7 @@
   (d/deploy {:installer :remote
              :artifact  jar-file
              :pom-file  (jio/file pom-dir "pom.xml")})
-  (git-push)
+  (git-push params)
   params)
 
 (comment
@@ -113,6 +114,8 @@
                           :aliases [:release]}))
 
   (str lib)
+
+  (git-push nil)
 
 
   )
