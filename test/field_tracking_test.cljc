@@ -107,4 +107,8 @@
       (t/is (not (:field/active? (form/field-by-path form [:x]))))
       (t/is (not (:field/touched? (form/field-by-path form [:x]))))
       (t/is (:field/pristine? (form/field-by-path form [:x])))
-      (t/is (not (:field/modified? (form/field-by-path form [:x])))))))
+      (t/is (not (:field/modified? (form/field-by-path form [:x]))))))
+  (t/testing "does not discard other data on the field"
+    (let [field (assoc (field/init [:x] "initial" tracker/full-tracker)
+                       ::has-initial-data true)]
+      (t/is (::has-initial-data (field/reset field))))))

@@ -77,10 +77,10 @@
   (-> field (snapshot-value) (discard-value-history)))
 
 (defn reset
-  "Abandon all changes to a `field`, including any accumulated state history
+  "Abandon all changes to a `field`, including any accumulated history
   established by its tracker."
   [field]
-  (init (:field/path field) (:field/initial-value field) (:field/tracker field)))
+  (-> field (reset-value) (discard-history)))
 
 (defn gain-focus
   "Track that the `field` has gained focus."
