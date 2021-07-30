@@ -64,8 +64,11 @@
        (snapshot-value)
        (discard-history))))
 
-(defn snapshot
-  "Snapshot the field's value with [[snapshot-value]] and reset its value
+(defn ^{:deprecated "0.2.76"} snapshot
+  "DEPRECATED: Prefer [[snapshot-value]] combined with one of the `discard-*-history`
+  helpers.
+
+  Snapshot the field's value with [[snapshot-value]] and reset its value
   history with [[discard-value-history]].
 
   This may be useful to record that a field has been saved externally, e.g. to
