@@ -1,8 +1,12 @@
 (ns build
   (:require [clojure.tools.build.api :as b]
             [deps-deploy.deps-deploy :as d]
+            [clojure.data.xml :as xml]
+            [clojure.zip :as zip]
             [clojure.java.io :as jio]
             [clojure.string :as string]))
+
+(xml/alias-uri 'pom "http://maven.apache.org/POM/4.0.0")
 
 (def lib 'com.github.mainej/f-form)
 (def git-revs (Integer/parseInt (b/git-count-revs nil)))
@@ -44,13 +48,33 @@
     (when (zero? exit)
       (string/trim out))))
 
-(defn jar [params]
+(defn pom [params]
   (b/write-pom {:class-dir class-dir
                 :lib       lib
                 :version   version
                 :basis     basis
                 :src-dirs  ["src"]})
-  (spit (jio/file pom-dir "pom.properties") (str "\nrevision=" (git-rev)) :append true)
+
+  ;; insert git revision as pom.xml > project > scm > tag
+  (let [pom-file (jio/file pom-dir "pom.xml")
+        scm      (loop [child (-> (xml/parse (jio/input-stream pom-file)
+                                             :skip-whitespace true)
+                                  zip/xml-zip
+                                  ;; start at first child of project
+                                  zip/down)]
+                   (if (= ::pom/scm (:tag (zip/node child)))
+                     child
+                     (recur (zip/right child))))
+        pom      (-> scm
+                     (zip/append-child (xml/sexp-as-element [::pom/tag (git-rev)]))
+                     (zip/root))]
+    (spit pom-file (xml/indent-str pom)))
+
+  params)
+
+(defn jar [params]
+  (pom params)
+
   (b/copy-dir {:src-dirs   ["src" "resources"]
                :target-dir class-dir})
   (b/jar {:class-dir class-dir
