@@ -1,18 +1,11 @@
 {:paths   ["src"]
  :deps    {vlad/vlad {:mvn/version "3.3.2"
-                      :optional true}}
- :aliases {:test    {:extra-paths ["test"]}
-           :runner  {:extra-deps {io.github.cognitect-labs/test-runner
-                                  {:git/url "https://github.com/cognitect-labs/test-runner.git"
-                                   :sha     "705ad25bbf0228b1c38d0244a36001c2987d7337"}}
-                     :exec-fn    cognitect.test-runner.api/test}
-           :build {:replace-paths ["dev"]
-                   :replace-deps {io.github.clojure/tools.build {;; old way
-                                                                 :git/url "https://github.com/clojure/tools.build" :sha "1e7c019730dc6f9e38793170c8801c5950516b60"
-                                                                 ;; new way, not working
-                                                                 :git/tag "v0.1.6" :git/sha "1e7c0197"}
-
-                                  slipset/deps-deploy {:mvn/version "0.1.5"}}
-                   :ns-default build}
-           :release {:extra-deps {applied-science/deps-library {:mvn/version "0.4.0"}}
-                     :main-opts  ["-m" "applied-science.deps-library"]}}}
+                      :optional    true}}
+ :aliases {:test   {:extra-paths ["test"]}
+           :runner {:extra-deps {io.github.cognitect-labs/test-runner
+                                 {:git/sha "705ad25bbf0228b1c38d0244a36001c2987d7337"}}
+                    :exec-fn    cognitect.test-runner.api/test}
+           :build  {:paths      ["dev"]
+                    :deps       {io.github.clojure/tools.build {:git/tag "v0.1.6" :git/sha "1e7c0197"}
+                                 slipset/deps-deploy           {:mvn/version "0.1.5"}}
+                    :ns-default build}}}

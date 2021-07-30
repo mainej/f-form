@@ -3,7 +3,10 @@ All notable changes to this project will be documented in this file. This change
 log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased]
+
+## [0.2.78] - 2021-07-30
 ### Added
+- Switched build tools to clojure.tools.build
 - More granular tools for manipulating a field's value and history.
 - Example app: Demonstration of more granular field manipulation.
 - Example app: Demonstration of displaying all errors instead of submitting.
@@ -28,7 +31,8 @@ Initial Clojars release
 ### Added
 - Core utilities for creating and interacting with forms and fields.
 
-[Unreleased]: https://github.com/mainej/f-form/compare/v0.2.1...main
+[Unreleased]: https://github.com/mainej/f-form/compare/v0.2.78...main
+[0.2.78]: https://github.com/mainej/f-form/compare/v0.2.1...v0.2.78
 [0.2.1]: https://github.com/mainej/f-form/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/mainej/f-form/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/mainej/f-form/compare/v0.0.1...v0.1.0

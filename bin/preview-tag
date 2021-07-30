@@ -2,5 +2,4 @@
 
 set -Eeuo pipefail
 
-# expects --patch, --minor, or --major
-clojure -M:release tag --dry-run "$@"
+clojure -T:build preview-tag
