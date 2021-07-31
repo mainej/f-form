@@ -80,6 +80,9 @@
   ;; EXAMPLE: validation (initial)
   (r/atom (validate-form (new-form))))
 
+(defn field-by-path! [path]
+  (form/field-by-path @hello-form path))
+
 (defn update-field! [path update-fn _dom-event]
   ;; EXAMPLE: external state management (on change)
   (swap! hello-form (fn [form]
@@ -91,6 +94,22 @@
             (form/update-field-by-path form path update-fn))
           form
           (form/fields form)))
+
+(defn invalid-values []
+  (form/values @hello-form (filter #(seq (:field/errors %)))))
+
+(defn valid-values []
+  (form/values @hello-form (remove #(seq (:field/errors %)))))
+
+(defn show-validation? []
+  (:form/show-validation? @hello-form))
+
+(defn show-disabled-warning? []
+  (and (show-validation?)
+       (form.validation/invalid? @hello-form)))
+
+(defn submitting? []
+  (form/submitting? @hello-form))
 
 (defn submitted! []
   (swap! hello-form
@@ -116,9 +135,6 @@
                               (dissoc :form/show-validation?))))
       (js/setTimeout submitted! 2000))
     (swap! hello-form assoc :form/show-validation? true)))
-
-(defn show-validation? []
-  (:form/show-validation? @hello-form))
 
 ;;;; HTML UTILS
 
@@ -186,8 +202,8 @@
 
 ;;;; HTML INPUT COMPONENTS
 
-(defn basic-input
-  ([field] [basic-input {} field])
+(defn generic-input
+  ([field] [generic-input {} field])
   ([props field]
    [fieldgroup field
     ;; EXAMPLE: html and css at user discretion. In this case, inputs are full
@@ -195,20 +211,20 @@
     ;; EXAMPLE: event handlers for an <input> element and a string-valued field
     [:input.w-full (form.dom/input (field-props props field) field)]]))
 
-(defn password-input
-  ([field] [password-input {} field])
+(defn generic-password-input
+  ([field] [generic-password-input {} field])
   ([props field]
-   [basic-input (assoc props :type "password") field]))
+   [generic-input (assoc props :type "password") field]))
 
-(defn checkbox-input
-  ([field] [checkbox-input {} field])
+(defn generic-checkbox-input
+  ([field] [generic-checkbox-input {} field])
   ([props field]
    [fieldgroup field
     ;; EXAMPLE: event handlers for a <input type="checkbox"> element and a boolean-valued field
     [:input (form.dom/checkbox (field-props props field) field)]]))
 
-(defn basic-select
-  ([field config] [basic-select {} field config])
+(defn generic-select
+  ([field config] [generic-select {} field config])
   ([props field {:keys [options option-value option-body]}]
    [fieldgroup field
     ;; EXAMPLE: event handlers for a <select> element and a complex-valued field
@@ -223,13 +239,45 @@
        ^{:key value}
        [:option {:value value} (option-body option)])]]))
 
-;; EXAMPLE: input customized for one field
-(defn communication-style-input [field]
-  [basic-select field {:options      communication-styles
-                       :option-value :comms.style/id
-                       :option-body  :comms.style/text}])
-
 ;;;; HTML PAGE & FORM COMPONENTS
+
+;; EXAMPLE: inputs customized for one field
+
+(defn full-name-input []
+  [generic-input {:auto-focus true} (field-by-path! [:full-name])])
+
+(defn communication-style-input []
+  [generic-select (field-by-path! [:communication-style])
+   {:options      communication-styles
+    :option-value :comms.style/id
+    :option-body  :comms.style/text}])
+
+(defn password-input []
+  [generic-password-input (field-by-path! [:password])])
+
+(defn password-confirmation-input []
+  [generic-password-input (field-by-path! [:password-confirmation])])
+
+(defn premium-account-input []
+  [generic-checkbox-input (field-by-path! [:premium-account])])
+
+(defn submit-button []
+  [:div
+   (when (show-disabled-warning?)
+     [:p.text-red "Please fix errors."])
+   [:button {:type     "submit"
+             :disabled (submitting?)}
+    "Submit" (when (submitting?) "...")]])
+
+(defn debug-invalid-values []
+  [:div
+   [:h2 "Invalid"]
+   [:code.overflow-x-auto (pr-str (invalid-values))]])
+
+(defn debug-valid-values []
+  [:div
+   [:h2 "Valid"]
+   [:code.overflow-x-auto (pr-str (valid-values))]])
 
 (defn form []
   [:main.max-w-5xl.space-y-4
@@ -238,36 +286,21 @@
     [:code.block
      "Note to developers: Field errors exist in the page but are hidden until
        each field is visited, so that users aren't met with a wall of red text.
-       To expose the errors, tab through the fields."]
-    [:code.block
-     "When all errors (though not necessarily all warnings) have been
-       resolved, the submit button will become enabled."]]
-   ;; EXAMPLE: if this were re-frame, this would be a subscription
-   ;; If a form has many fields, it's better to subscribe to each one
-   ;; individually, rather than to the form as a whole, to avoid re-rendering
-   ;; every field whenever one of them has any interaction.
-   (let [form @hello-form]
-     [:div.space-y-4
-      [:form.space-y-4 {:on-submit (fn [e]
-                                     (.stopPropagation e)
-                                     (.preventDefault e)
-                                     (mock-submit!))}
-       [:div.grid.grid-cols-1.md:grid-cols-3.gap-1.md:gap-4
-        [basic-input {:auto-focus true} (form/field-by-path form [:full-name])]
-        [communication-style-input (form/field-by-path form [:communication-style])]
-        [password-input (form/field-by-path form [:password])]
-        [password-input (form/field-by-path form [:password-confirmation])]
-        [checkbox-input (form/field-by-path form [:premium-account])]]
-       [:div
-        (when (and (show-validation?)
-                   (form.validation/invalid? form))
-          [:p.text-red "Please fix errors."])
-        [:button {:type     "submit"
-                  :disabled (form/submitting? form)}
-         "Submit" (when (form/submitting? form) "...")]]]
-      [:div
-       [:h2 "Invalid"]
-       [:code (pr-str (form/values form (filter #(seq (:field/errors %)))))]]
-      [:div
-       [:h2 "Valid"]
-       [:code (pr-str (form/values form (remove #(seq (:field/errors %)))))]]])])
+       To expose the errors, tab through the fields, or click submit."]]
+   [:div.space-y-4
+    ;; EXAMPLE: If a form has many fields, it's better to subscribe to each one
+    ;; in its own component, rather than to the form as a whole, to avoid
+    ;; re-rendering every field whenever one of them has any interaction.
+    [:form.space-y-4 {:on-submit (fn [e]
+                                   (.stopPropagation e)
+                                   (.preventDefault e)
+                                   (mock-submit!))}
+     [:div.grid.grid-cols-1.md:grid-cols-3.gap-1.md:gap-4
+      [full-name-input]
+      [communication-style-input]
+      [password-input]
+      [password-confirmation-input]
+      [premium-account-input]]
+     [submit-button]]
+    [debug-invalid-values]
+    [debug-valid-values]]])
