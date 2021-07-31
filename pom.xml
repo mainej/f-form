@@ -17,7 +17,7 @@
     <!-- GENERATED -->
   </dependencies>
   <build>
-      <sourceDirectory><!-- GENERATED --></sourceDirectory>
+    <sourceDirectory><!-- GENERATED --></sourceDirectory>
   </build>
   <repositories>
     <repository>
