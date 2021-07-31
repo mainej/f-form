@@ -8,14 +8,12 @@ Install from Clojars:
 
 [![Clojars Project](https://img.shields.io/clojars/v/com.github.mainej/f-form.svg)](https://clojars.org/com.github.mainej/f-form)
 
-Install from Github:
+Install unreleased sha from Github (assuming Clojure CLI 1.10.3.933 or higher):
 
 ```clojure
 # deps.edn
 {:deps
-  {mainej/f-form
-    {:git/url "https://github.com/mainej/f-form"
-     :sha "<recent sha>"}}}
+  {com.github.mainej/f-form {:git/sha "<recent sha>"}}}
 ```
 
 Updating? See the [CHANGELOG.md][changelog].
