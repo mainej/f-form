@@ -39,7 +39,8 @@
 (defn reset-value
   "Revert the field's `:field/value` \"backward\" to the `:field/initial-value`.
   This is a relative of [[snapshot-value]] which advances the field's value
-  forward."
+  forward. Should usually be combined with [[discard-value-history]] and/or
+  [[discard-history]]. For the later you can use [[reset]]."
   [field]
   (assoc field :field/value (:field/initial-value field)))
 
