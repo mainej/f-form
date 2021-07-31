@@ -46,8 +46,10 @@
 (defn snapshot-value
   "Advance the field's `:field/initial-value` \"forward\" to the current
   `:field/value`. This is a relative of [[reset-value]] which reverts the
-  field's value backward. To also reset the value tracking, see
-  [[discard-value-history]], or for both, use [[snapshot]]."
+  field's value backward. From this moment onwards, the field will be
+  `:field/pristine?` when it matches the the current `:field/value`. Thus, it
+  should usually be combined with [[discard-value-history]] or
+  [[discard-history]]."
   [field]
   (assoc field :field/initial-value (:field/value field)))
 
