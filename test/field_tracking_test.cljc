@@ -89,7 +89,8 @@
                    (form/update-field-by-path [:x] field/gain-focus)
                    (form/update-field-by-path [:x] #(field/change % "revised"))
                    (form/update-field-by-path [:x] field/lose-focus)
-                   (form/update-field-by-path [:x] field/snapshot))]
+                   (form/update-field-by-path [:x] field/snapshot-value)
+                   (form/update-field-by-path [:x] field/discard-value-history))]
       (t/is (:field/visited? (form/field-by-path form [:x])))
       (t/is (not (:field/active? (form/field-by-path form [:x]))))
       (t/is (:field/touched? (form/field-by-path form [:x])))
