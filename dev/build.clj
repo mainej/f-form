@@ -19,21 +19,6 @@
 (def ^:private jar-file (format "target/%s-%s.jar" (name lib) version))
 (def ^:private pom-dir (jio/file (b/resolve-path class-dir) "META-INF" "maven" (namespace lib) (name lib)))
 
-#_{:clj-kondo/ignore #{:clojure-lsp/unused-public-var}}
-(defn current-tag "Show the tag for the current release." [params]
-  (println tag)
-  params)
-
-#_{:clj-kondo/ignore #{:clojure-lsp/unused-public-var}}
-(defn preview-tag
-  "Show the tag for the next release.
-
-  This tag should be used in the CHANGELOG. After those edits are committed, run
-  `bin/tag-release`. This tag will be assigned to the CHANGELOG commit."
-  [params]
-  (println next-tag)
-  params)
-
 (defn clean "Remove the target folder." [params]
   (b/delete {:path "target"})
   params)
@@ -67,7 +52,10 @@
 
 (defn- assert-changelog-updated [params]
   (when-not (string/includes? (slurp "CHANGELOG.md") tag)
-    (die 10 "CHANGELOG.md must include tag %s." tag))
+    (die 10 (string/join "\n"
+                         ["CHANGELOG.md must include tag."
+                          "  * If you will amend the current commit, use %s"
+                          "  * If you intend to create a new commit, use %s"]) version next-version))
   params)
 
 (defn- assert-scm-clean [params]
@@ -76,7 +64,7 @@
                 b/process
                 :out
                 string/blank?)
-    (die 11 "Git working directory must be clean."))
+    (die 11 "Git working directory must be clean. Run git commit"))
   params)
 
 (defn- assert-scm-tagged [params]
@@ -86,12 +74,15 @@
                 b/process
                 :exit
                 zero?)
-    (die 12 "Git tag %s must exist." tag))
+    (die 12 "Git tag %s must exist. Run bin/tag-release" tag))
   (let [{:keys [exit out]} (b/process {:command-args ["git" "describe" "--tags" "--abbrev=0" "--exact-match"]
                                        :out          :capture})]
     (when (or (not (zero? exit))
               (not= (string/trim out) tag))
-      (die 13 "Git tag %s must be on HEAD." tag)))
+      (die 13 (string/join "\n"
+                           ["Git tag %s must be on HEAD."
+                            ""
+                            "Proceed with caution, because this tag may have already been released. If you've determined it's safe, run `git tag -d %s` before re-running `bin/tag-release`."]) tag tag)))
   params)
 
 (defn- git-push [params]
@@ -112,6 +103,20 @@
     (die 14 "Couldn't sync with github."))
   params)
 
+(defn check-release
+  "Check that the library is ready to be released.
+
+  * No outstanding commits
+  * Git tag for current release exists in local repo
+  * CHANGELOG.md references new tag"
+  [params]
+  (assert-changelog-updated params)
+  ;; after assertions about content, so any change can be committed/amended
+  (assert-scm-clean params)
+  ;; last, so that correct commit is tagged
+  (assert-scm-tagged params)
+  params)
+
 #_{:clj-kondo/ignore #{:clojure-lsp/unused-public-var}}
 (defn release
   "Release the library.
@@ -124,9 +129,7 @@
   * Deploy to Clojars
   * Ensure the tag is available on Github"
   [params]
-  (assert-scm-clean params)
-  (assert-scm-tagged params)
-  (assert-changelog-updated params)
+  (check-release params)
   (jar params)
   (d/deploy {:installer :remote
              :artifact  jar-file
