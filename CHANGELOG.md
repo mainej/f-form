@@ -4,6 +4,13 @@ log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.2.90] - 2021-08-20
+### Added
+- Example app: demonstration how to improve performance by subscribing to individual
+  fields
+- Improved explanation of field tracking.
+- Updated tools.build
+
 ## [0.2.81] - 2021-07-30
 Try again to pin clojars release to a git sha.
 
@@ -40,7 +47,8 @@ Initial Clojars release
 ### Added
 - Core utilities for creating and interacting with forms and fields.
 
-[Unreleased]: https://github.com/mainej/f-form/compare/v0.2.81...main
+[Unreleased]: https://github.com/mainej/f-form/compare/v0.2.90...main
+[0.2.90]: https://github.com/mainej/f-form/compare/v0.2.81...v0.2.90
 [0.2.81]: https://github.com/mainej/f-form/compare/v0.2.80...v0.2.81
 [0.2.80]: https://github.com/mainej/f-form/compare/v0.2.79...v0.2.80
 [0.2.79]: https://github.com/mainej/f-form/compare/v0.2.78...v0.2.79
