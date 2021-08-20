@@ -14,15 +14,17 @@
 (def ^:private next-tag (str "v" next-version))
 (def ^:private class-dir "target/classes")
 (def ^:private basis (b/create-basis {:root    nil
-                            :user    nil
-                            :project "deps.edn"}))
+                                      :user    nil
+                                      :project "deps.edn"}))
 (def ^:private jar-file (format "target/%s-%s.jar" (name lib) version))
 (def ^:private pom-dir (jio/file (b/resolve-path class-dir) "META-INF" "maven" (namespace lib) (name lib)))
 
+#_{:clj-kondo/ignore #{:clojure-lsp/unused-public-var}}
 (defn current-tag "Show the tag for the current release." [params]
   (println tag)
   params)
 
+#_{:clj-kondo/ignore #{:clojure-lsp/unused-public-var}}
 (defn preview-tag
   "Show the tag for the next release.
 
@@ -110,6 +112,7 @@
     (die 14 "Couldn't sync with github."))
   params)
 
+#_{:clj-kondo/ignore #{:clojure-lsp/unused-public-var}}
 (defn release
   "Release the library.
 
