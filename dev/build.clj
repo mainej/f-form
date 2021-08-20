@@ -1,41 +1,42 @@
 (ns build
-  (:require [clojure.data.xml :as xml]
-            [clojure.data.zip.xml :as zip-xml]
-            [clojure.java.io :as jio]
-            [clojure.string :as string]
-            [clojure.tools.build.api :as b]
-            [clojure.zip :as zip]
-            [deps-deploy.deps-deploy :as d]))
+  (:require
+   [clojure.java.io :as jio]
+   [clojure.string :as string]
+   [clojure.tools.build.api :as b]
+   [deps-deploy.deps-deploy :as d]))
 
-(xml/alias-uri 'pom "http://maven.apache.org/POM/4.0.0")
-
-(def lib 'com.github.mainej/f-form)
-(def git-revs (Integer/parseInt (b/git-count-revs nil)))
-(defn format-version [revision] (format "0.2.%s" revision))
-(def version (format-version git-revs))
-(def next-version (format-version (inc git-revs)))
-(def tag (str "v" version))
-(def next-tag (str "v" next-version))
-(def class-dir "target/classes")
-(def basis (b/create-basis {:root    nil
+(def ^:private lib 'com.github.mainej/f-form)
+(def ^:private git-revs (Integer/parseInt (b/git-count-revs nil)))
+(defn- format-version [revision] (format "0.2.%s" revision))
+(def ^:private version (format-version git-revs))
+(def ^:private next-version (format-version (inc git-revs)))
+(def ^:private tag (str "v" version))
+(def ^:private next-tag (str "v" next-version))
+(def ^:private class-dir "target/classes")
+(def ^:private basis (b/create-basis {:root    nil
                             :user    nil
                             :project "deps.edn"}))
-(def jar-file (format "target/%s-%s.jar" (name lib) version))
-(def pom-dir (jio/file (b/resolve-path class-dir) "META-INF" "maven" (namespace lib) (name lib)))
+(def ^:private jar-file (format "target/%s-%s.jar" (name lib) version))
+(def ^:private pom-dir (jio/file (b/resolve-path class-dir) "META-INF" "maven" (namespace lib) (name lib)))
 
-(defn current-tag [params]
+(defn current-tag "Show the tag for the current release." [params]
   (println tag)
   params)
 
-(defn preview-tag [params]
+(defn preview-tag
+  "Show the tag for the next release.
+
+  This tag should be used in the CHANGELOG. After those edits are committed, run
+  `bin/tag-release`. This tag will be assigned to the CHANGELOG commit."
+  [params]
   (println next-tag)
   params)
 
-(defn clean [params]
+(defn clean "Remove the target folder." [params]
   (b/delete {:path "target"})
   params)
 
-(defn die
+(defn- die
   ([code message & args]
    (die code (apply format message args)))
   ([code message]
@@ -43,49 +44,31 @@
      (println message))
    (System/exit code)))
 
-(defn git-rev []
+(defn- git-rev []
   (let [{:keys [exit out]} (b/process {:command-args ["git" "rev-parse" "HEAD"]
                                        :out          :capture})]
     (when (zero? exit)
       (string/trim out))))
 
-(defn pom [params]
+(defn jar "Build the library JAR file." [params]
   (b/write-pom {:class-dir class-dir
                 :lib       lib
                 :version   version
+                :scm       {:tag (git-rev)}
                 :basis     basis
                 :src-dirs  ["src"]})
-
-  ;; insert git revision as pom.xml > project > scm > tag
-  (let [pom-file (jio/file pom-dir "pom.xml")
-        rev-tag  (xml/sexp-as-element [::pom/tag (git-rev)])
-        scm      (-> (xml/parse (jio/input-stream pom-file)
-                                :skip-whitespace true)
-                     zip/xml-zip
-                     (zip-xml/xml1-> ::pom/project ::pom/scm))
-        pom      (zip/root
-                  (if-let [existing-child (zip-xml/xml1-> scm ::pom/tag)]
-                    (zip/edit existing-child (constantly rev-tag))
-                    (zip/append-child scm rev-tag)))]
-    (spit pom-file (xml/indent-str pom)))
-
-  params)
-
-(defn jar [params]
-  (pom params)
-
   (b/copy-dir {:src-dirs   ["src" "resources"]
                :target-dir class-dir})
   (b/jar {:class-dir class-dir
           :jar-file  jar-file})
   params)
 
-(defn assert-changelog-updated [params]
+(defn- assert-changelog-updated [params]
   (when-not (string/includes? (slurp "CHANGELOG.md") tag)
     (die 10 "CHANGELOG.md must include tag %s." tag))
   params)
 
-(defn assert-scm-clean [params]
+(defn- assert-scm-clean [params]
   (when-not (-> {:command-args ["git" "status" "--porcelain"]
                  :out          :capture}
                 b/process
@@ -94,7 +77,7 @@
     (die 11 "Git working directory must be clean."))
   params)
 
-(defn assert-scm-tagged [params]
+(defn- assert-scm-tagged [params]
   (when-not (-> {:command-args ["git" "rev-list" tag]
                  :out          :ignore
                  :err          :ignore}
@@ -109,7 +92,7 @@
       (die 13 "Git tag %s must be on HEAD." tag)))
   params)
 
-(defn git-push [params]
+(defn- git-push [params]
   (when (or (-> {:command-args ["git" "push" "origin" tag]
                  :out          :ignore
                  :err          :ignore}
@@ -127,7 +110,17 @@
     (die 14 "Couldn't sync with github."))
   params)
 
-(defn release [params]
+(defn release
+  "Release the library.
+
+  * Confirm that we are ready to release
+    * No outstanding commits
+    * Git tag for current release exists in local repo
+    * CHANGELOG.md references new tag
+  * Build the JAR
+  * Deploy to Clojars
+  * Ensure the tag is available on Github"
+  [params]
   (assert-scm-clean params)
   (assert-scm-tagged params)
   (assert-changelog-updated params)

@@ -5,8 +5,9 @@
            :runner {:extra-deps {io.github.cognitect-labs/test-runner
                                  {:git/sha "705ad25bbf0228b1c38d0244a36001c2987d7337"}}
                     :exec-fn    cognitect.test-runner.api/test}
+
+           ;; for help: clojure -A:deps -T:build help/doc
            :build  {:paths      ["dev"]
-                    :deps       {io.github.clojure/tools.build {:git/tag "v0.1.6" :git/sha "1e7c0197"}
-                                 slipset/deps-deploy           {:mvn/version "0.1.5"}
-                                 org.clojure/data.zip          {:mvn/version "1.0.0"}}
+                    :deps       {io.github.clojure/tools.build {:git/tag "v0.1.8" :git/sha "38d2780"}
+                                 slipset/deps-deploy           {:mvn/version "0.1.5"}}
                     :ns-default build}}}
