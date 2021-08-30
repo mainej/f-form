@@ -1,22 +1,19 @@
 (ns build
   (:require
-   [clojure.java.io :as jio]
    [clojure.string :as string]
    [clojure.tools.build.api :as b]
-   [deps-deploy.deps-deploy :as d]))
+   [org.corfield.build :as bb]))
 
 (def ^:private lib 'com.github.mainej/f-form)
-(def ^:private git-revs (Integer/parseInt (b/git-count-revs nil)))
-(defn- format-version [revision] (format "0.2.%s" revision))
-(def ^:private version (format-version git-revs))
-(def ^:private next-version (format-version (inc git-revs)))
+(def ^:private rev-count (Integer/parseInt (b/git-count-revs nil)))
+(def ^:private semantic-version "0.2")
+(defn- format-version [revision] (format "%s.%s" semantic-version revision))
+(def ^:private version (format-version rev-count))
+(def ^:private next-version (format-version (inc rev-count)))
 (def ^:private tag (str "v" version))
-(def ^:private class-dir "target/classes")
 (def ^:private basis (b/create-basis {:root    nil
                                       :user    nil
                                       :project "deps.edn"}))
-(def ^:private jar-file (format "target/%s-%s.jar" (name lib) version))
-(def ^:private pom-dir (jio/file (b/resolve-path class-dir) "META-INF" "maven" (namespace lib) (name lib)))
 
 (defn- die
   ([code message & args]
@@ -26,29 +23,20 @@
      (println message))
    (System/exit code)))
 
+(defn- git [command args]
+  (b/process (assoc args :command-args (into ["git"] command))))
+
 (defn- git-rev []
-  (let [{:keys [exit out]} (b/process {:command-args ["git" "rev-parse" "HEAD"]
-                                       :out          :capture})]
+  (let [{:keys [exit out]} (git ["rev-parse" "HEAD"] {:out :capture})]
     (when (zero? exit)
       (string/trim out))))
 
 (defn- git-push [params]
-  (when (or (-> {:command-args ["git" "push" "origin" tag]
-                 :out          :ignore
-                 :err          :ignore}
-                b/process
-                :exit
-                zero?
-                not)
-            (-> {:command-args ["git" "push" "origin"]
-                 :out          :ignore
-                 :err          :ignore}
-                b/process
-                :exit
-                zero?
-                not))
-    (die 14 "Couldn't sync with github."))
+  (when-not (and (zero? (:exit (git ["push" "origin" tag] {})))
+                 (zero? (:exit (git ["push" "origin"] {}))))
+    (die 15 "\nCouldn't sync with github."))
   params)
+
 
 (defn- assert-changelog-updated [params]
   (when-not (string/includes? (slurp "CHANGELOG.md") tag)
@@ -59,56 +47,45 @@
   params)
 
 (defn- assert-scm-clean [params]
-  (when-not (-> {:command-args ["git" "status" "--porcelain"]
-                 :out          :capture}
-                b/process
-                :out
-                string/blank?)
-    (die 11 "Git working directory must be clean. Run git commit"))
+  (let [git-changes (:out (git ["status" "--porcelain"] {:out :capture}))]
+    (when-not (string/blank? git-changes)
+      (println git-changes)
+      (die 12 "Git working directory must be clean. Run `git commit`")))
   params)
 
 (defn- assert-scm-tagged [params]
-  (when-not (-> {:command-args ["git" "rev-list" tag]
-                 :out          :ignore
-                 :err          :ignore}
-                b/process
-                :exit
-                zero?)
-    (die 12 "Git tag %s must exist. Run bin/tag-release" tag))
-  (let [{:keys [exit out]} (b/process {:command-args ["git" "describe" "--tags" "--abbrev=0" "--exact-match"]
-                                       :out          :capture})]
-    (when (or (not (zero? exit))
-              (not= (string/trim out) tag))
-      (die 13 (string/join "\n"
-                           ["Git tag %s must be on HEAD."
+  (when-not (zero? (:exit (git ["rev-list" tag] {:out :ignore})))
+    (die 13 "\nGit tag %s must exist. Run `bin/tag-release`" tag))
+  (let [{:keys [exit out]} (git ["describe" "--tags" "--abbrev=0" "--exact-match"] {:out :capture})]
+    (when-not (and (zero? exit)
+                   (= (string/trim out) tag))
+      (die 14 (string/join "\n"
+                           [""
+                            "Git tag %s must be on HEAD."
                             ""
                             "Proceed with caution, because this tag may have already been released. If you've determined it's safe, run `git tag -d %s` before re-running `bin/tag-release`."]) tag tag)))
   params)
 
+
 (defn clean "Remove the target folder." [params]
-  (b/delete {:path "target"})
-  params)
+  (bb/clean params))
 
 (defn jar "Build the library JAR file." [params]
-  (b/write-pom {:class-dir class-dir
-                :lib       lib
-                :version   version
-                :scm       {:tag (git-rev)}
-                :basis     basis
-                :src-dirs  ["src"]})
-  (b/copy-dir {:src-dirs   ["src" "resources"]
-               :target-dir class-dir})
-  (b/jar {:class-dir class-dir
-          :jar-file  jar-file})
-  params)
+  (bb/jar (assoc params
+                 :lib     lib
+                 :version version
+                 :basis   basis
+                 :tag     (git-rev))))
 
 (defn check-release
   "Check that the library is ready to be released.
 
+  * Tests pass
   * No outstanding commits
   * Git tag for current release exists in local repo
   * CHANGELOG.md references new tag"
   [params]
+  (bb/run-tests (assoc params :aliases [:runner]))
   (assert-changelog-updated params)
   ;; after assertions about content, so any change can be committed/amended
   (assert-scm-clean params)
@@ -128,8 +105,7 @@
   (check-release params)
   (clean params)
   (jar params)
-  (d/deploy {:installer :remote
-             :artifact  jar-file
-             :pom-file  (jio/file pom-dir "pom.xml")})
+  (bb/deploy {:lib     lib
+              :version version})
   (git-push params)
   params)

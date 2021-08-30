@@ -17,9 +17,10 @@ of 0.
 
 It will check that you have done the following things:
 
-1. Proactively updated CHANGELOG.md
-2. Commited
-3. Tagged commit
+1. Gotten tests passing
+2. Proactively updated CHANGELOG.md
+3. Commited
+4. Tagged commit
 
 ### Release
 
