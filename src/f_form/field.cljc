@@ -67,6 +67,7 @@
        (snapshot-value)
        (discard-history))))
 
+#_{:clj-kondo/ignore #{:clojure-lsp/unused-public-var}}
 (defn ^{:deprecated "0.2.76"} snapshot
   "DEPRECATED: Prefer [[snapshot-value]] combined with one of the `discard-*-history`
   helpers.

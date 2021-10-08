@@ -1,0 +1,3 @@
+{:source-aliases                #{:build :test}
+ :show-docs-arity-on-same-line? true
+ :semantic-tokens?              false}
